@@ -41,8 +41,9 @@ class MCC_Process(Process):
     def run(self):
 
         print(f"[MCCGUI]子进程{self.name}（{self.pid}）开始执行，父进程为（{self.ppid}）")
-        
-
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = subprocess.SW_HIDE    #隐藏发布版本MCC的命令行窗口
         
 
         self.result = subprocess.Popen(
@@ -55,7 +56,7 @@ class MCC_Process(Process):
             shell=False,         # 是否通过shell执行
             cwd=self.dir_path,   # 子进程工作目录
             env=None,            # 环境变量（字典）
-            startupinfo=None,    # Windows控制窗口样式（如隐藏）
+            startupinfo=startupinfo,    # Windows控制窗口样式（如隐藏）
             creationflags=0,     # Windows创建标志（如CREATE_NO_WINDOW）
             text=True,           # 文本模式（Python 3.7+，等同于universal_newlines）
             encoding="utf-8",       # 文本编码（如'utf-8'）
