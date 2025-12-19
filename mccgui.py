@@ -201,7 +201,7 @@ class AddAccount:
         self.server_label.grid(row=self.row,column=0)
         self.server_ent=Entry(self.frame2)
         self.server_ent.grid(row=self.row,column=1)
-        if MangoCraft: self.server_ent.insert(0, "bot.server.mangocraft.net") #芒果方块定制
+        if MangoCraft: self.server_ent.insert(0, "bot.server.mangocraft.cn") #芒果方块定制
         self.row+=1
 
         if self.way_single_ver.get()=="Yggdrasil": 
