@@ -36,6 +36,7 @@ v0.6    1.新增重生功能：死亡状态下“重生”按钮亮起，点击�
 v0.6.1  1.新增发送消息缓存功能：发送过的消息或命令会被缓存（关闭程序后会清空），按下按键“↑”或“↓”可以快速输入之前输入过的内容。
         2.打开已关闭的控制窗口时会将监听窗口的滚动条移动至最下方；
         3.修复了重连和退出游戏后假人状态不变的问题，现在假人不在线时状态显示均为未知；
+v0.6.2  修复了编译后的程序在window系统下的MCC子进程无法正确创建的问题。
          
 '''
 
@@ -52,7 +53,7 @@ from wsgiref import validate
 from accounts import *
 from numpy import insert, log
 import os
-from multiprocessing import Queue
+from multiprocessing import Queue, freeze_support
 import shutil
 import setini
 import start
@@ -60,6 +61,9 @@ import logging
 
 accounts=Accounts()
 MangoCraft = True
+version = "0.6.2"
+
+
 
 class MCC_GUI():
     '''主窗口类'''
@@ -775,6 +779,8 @@ def run():
     return MCC_GUI()
 
 if __name__=="__main__":
+    print(f"主进程MCCGUI_v{version} {"for MangoCraft" if MangoCraft else ""}（{os.getpid()}）已启动。")
+    freeze_support()
     app = run()
 
     mainloop()

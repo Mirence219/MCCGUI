@@ -37,24 +37,23 @@ class MCC_Process(Process):
             }
 
         print(f"[MCCGUI]待执行的子进程{self.name}已创建，父进程为（{self.ppid}）")
-        
 
     def run(self):
 
         print(f"[MCCGUI]子进程{self.name}（{self.pid}）开始执行，父进程为（{self.ppid}）")
+        
 
         
 
         self.result = subprocess.Popen(
             [self.exe_path],          # 命令及参数（列表或字符串）
             bufsize=-1,          # 缓冲区大小（默认-1表示系统默认）
-            executable=self.exe_path,     # 指定可执行文件路径（一般不用）
             stdin=subprocess.PIPE,          # 标准输入
             stdout=subprocess.PIPE,         # 标准输出
             stderr=subprocess.PIPE,         # 标准错误
             close_fds=True,      # 关闭子进程继承的文件描述符
             shell=False,         # 是否通过shell执行
-            cwd=self.dir_path,            # 子进程工作目录
+            cwd=self.dir_path,   # 子进程工作目录
             env=None,            # 环境变量（字典）
             startupinfo=None,    # Windows控制窗口样式（如隐藏）
             creationflags=0,     # Windows创建标志（如CREATE_NO_WINDOW）
