@@ -1,0 +1,38 @@
+[MCC] help <cmdname>. Available commands:
+/help [animation|bed|blockinfo|bots|changeslot|chunk|connect|debug|dig|dropitem|enchant|entity|execif|execmulti|exit|health|inventory|list|log|look|move|nameitem|reco|reload|respawn|script|send|set|setrnd|sneak|tps|upgrade|useblock|useitem]
+/animation [mainhand|offhand|_help]
+/bed (leave|sleep|_help)
+/blockinfo [-s|<Location>|_help]
+/bots [list|unload|_help]
+/changeslot (<Slot>|_help)
+/chunk (status|_setloading|_setloaded|_delete|_help)
+/connect (<ServerNick>|_help)
+/debug [on|off|_help]
+/dig [<Duration>|<Location>|_help]
+/dropitem (<ItemType>|_help)
+/enchant (top|middle|bottom|_help)
+/entity [near|<EntityID>|<EntityType>|_help]
+/execif <Condition> <Command>
+/execmulti <Commands>
+/exit [<ExitCode>|_help]
+/quit -> exit
+/health [_help]
+/inventory [creativegive|creativedelete|inventories|search|<InventoryId>|player|container|_help]
+/list [_help]
+/log (<String>|_help)
+/look [up|down|east|west|north|south|<Yaw>|<Location>|_help]
+/move (on|off|gravity|up|down|east|west|north|south|center|get|<location>|_help)
+/nameitem <any>
+/reco [<AccountNick>|_help]
+/reload [_help]
+/respawn [_help]
+/script (<Script>|_help)
+/send <any>
+/set (<Expression>|_help)
+/setrnd <VarName> (<Min>|<Expression>)
+/sneak [_help]
+/tps [_help]
+/upgrade [-f|download|check|cancel|_help]
+/useblock (<Location>|_help)
+/useitem [_help]
+For server help, use '/send /help' instead.
