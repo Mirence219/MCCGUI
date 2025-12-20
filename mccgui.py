@@ -39,11 +39,14 @@ v0.6.1  1.新增发送消息缓存功能：发送过的消息或命令会被缓�
 v0.6.2  1.修复了发布版本在window系统下的MCC子进程无法被正确创建的问题；
         2.隐藏了发布版本的MCC自身弹出的命令行窗口；
         3.设计了MCCGUI的初代图标。
+v0.6.3  1.修复了多种情况下交互子进程和MCC子进程未能正确关闭的问题（包括但不限于强制关闭MCC、重连、关闭主程序）；
+        2.监听窗口和日志内添加了更多的调试信息（[MCCGUI]开头的消息)。
          
 '''
 
 from genericpath import isfile
 import glob
+from nt import terminal_size
 from re import M, sub
 from statistics import variance
 from struct import pack
@@ -60,10 +63,11 @@ import shutil
 import setini
 import start
 import logging
+import sys
 
 accounts=Accounts()
 MangoCraft = True
-version = "0.6.2"
+version = "0.6.3"
 
 
 
@@ -74,6 +78,7 @@ class MCC_GUI():
         self.window=Tk()
         self.window.title("MCC GUI 可交互式工具")
         self.window.iconbitmap("bin/AppIcon.ico")
+        self.window.protocol("WM_DELETE_WINDOW", self.close)    #关闭窗口后强制关闭主进程
         self.width=800
         self.height=600
         SCREEN_WIDTH=self.window.winfo_screenwidth()
@@ -112,13 +117,12 @@ class MCC_GUI():
         self.accounts_init = True
         self.accounts=[]
         self.count=accounts.len()
-        print("[MCCGUI]账号数量",self.count)
+        print("[DEBUG]账号数量",self.count)
         for i in range(self.count):
             self.verification(accounts.read(i),i)
             self.accounts.append(AccountFrame(self,i,accounts.read(i)))
             self.accounts[i].frame.pack(fill="both", padx=4)
-            print(f"[MCCGUI]账户{i}已生成")
-            
+            print(f"[DEBUG]账户{i}已生成")
 
     def update_account(self):
         '''更新账户列表'''
@@ -133,7 +137,14 @@ class MCC_GUI():
                 flag=True
         if not flag:
             creat_user_file(num,user_data)
-
+    
+    def close(self):
+        print(f"用户关闭主窗口，主进程以及所有子进程都将将强制关闭！")
+        self.window.destroy()
+        for account in self.accounts:
+            if account.exe != None:
+                account.close_MCC()
+        sys.exit(0)
 
 class AddAccount:
     '''添加账户窗口类'''
@@ -258,7 +269,6 @@ class AddAccount:
             app.update_account()
             self.window.destroy()
 
-
 class AccountFrame:
     '''账号启动框架类(存储账号的对象内容)'''
     def __init__(self,master,number,data):
@@ -267,10 +277,7 @@ class AccountFrame:
         self.number=number
         self.data=data
 
-        self.in_queue = Queue()     #通过队列与MCC进程通信
-        self.out_queue = Queue()    #MCC输出
-        self.command_queue = Queue()#自定义命令输出
-        self.state_queue = Queue()  #假人状态接收
+        self.set_queue()
 
         self.control_window = None
         self.exe = None
@@ -309,7 +316,12 @@ class AccountFrame:
             #handler.setFormatter(formatter)
             self.log.addHandler(handler)
 
-       
+    def set_queue(self):
+        self.in_queue = Queue()     #通过队列与MCC进程通信
+        self.out_queue = Queue()    #MCC输出
+        self.get_command_queue = Queue()#接受自定义命令
+        self.put_command_queue = Queue()#发送自定义命令
+        self.state_queue = Queue()  #假人状态接收
 
     def button(self):
         self.start_button=Button(self.frame,text="启动",command=self.start)   #启动/退出按钮
@@ -344,15 +356,15 @@ class AccountFrame:
             self.start_button.config(text="退出")
             setini.login_ini(self.data,self.path_dic["ini_path"])
             if self.exe != None and self.exe.is_alive():
-                print(f"[MCCGUI]上一个相同子进程（{self.exe.pid}）未结束，已强制终止")
-                self.exe.terminate()
-                self.exe.join()
-            self.exe = None
-            self.exe=start.MCC_Process(self.path_dic, self.in_queue, self.out_queue, self.command_queue, self.state_queue, self.data, False)
-            print("[MCCGUI]首次启动伊始默认不允许重连")
+                print(f"[DEBUG]上一个相同子进程（{self.exe.pid}）未结束，将强制终止")
+                self.close_MCC()
+                #self.exe.terminate()
+                #self.exe.join()
+            self.set_queue()
+            self.creat_process()
+            self.window_print("[MCCGUI] 首次启动伊始默认不允许重连", self.log)
             self.working = True
             self.exe.start()
-            #self.update()
             if self.control_window != None and self.control_window.is_alive():
                 self.control_window.start_button.config(text="退出")
                 self.control_window.reco_button.config(state=NORMAL)
@@ -365,7 +377,7 @@ class AccountFrame:
         if self.working:
             self.in_queue.put("/quit",False)
         self.working = False
-        #self.update()
+        self.window_print("[MCCGUI] 正在退出。。。", self.log)
         if self.control_window != None and self.control_window.is_alive():
             self.control_window.start_button.config(text="启动")
             self.control_window.reco_button.config(state=DISABLED)
@@ -377,13 +389,13 @@ class AccountFrame:
             accounts.delete(self.number)
             app.update_account()
         else:
-            print("[MCCGUI]进程工作中无法删除！")
+            print("[DEBUG]进程工作中无法删除！")
 
     def edit(self):
         if not self.working:
             self.edit_window = EditAccount(self.master, self.number, self.data)
         else:
-            print("[MCCGUI]进程工作中无法编辑！")
+            print("[DEBUG]进程工作中无法编辑！")
 
     def control(self):
         '''打开控制窗口'''
@@ -395,33 +407,33 @@ class AccountFrame:
 
     def listen_command(self):
         '''监听来自子进程的指令输出'''
-        if not self.command_queue.empty():
-            command_output = self.command_queue.get(False)
+        if not self.get_command_queue.empty():
+            command_output = self.get_command_queue.get(False)
             if self.working:
                 if command_output == "close":
-                    print(f"[MCCGUI]父进程（{os.getpid()}）接收到{self.data[5]}子进程（{self.exe.pid}）的反馈信号\"close\",即将自动关闭")
+                    print(f"[DEBUG]父进程（{os.getpid()}）接收到{self.data[5]}子进程（{self.exe.pid}）的反馈信号\"close\",即将自动关闭")
                     self.working = False
                     self.stop()
 
                 elif command_output == "restart":
-                    print(f"[MCCGUI]父进程（{os.getpid()}）接收到{self.data[5]}子进程（{self.exe.pid}）的反馈信号\"restart\"，即将尝试重连")
+                    print(f"[DEBUG]父进程（{os.getpid()}）接收到{self.data[5]}子进程（{self.exe.pid}）的反馈信号\"restart\"，即将尝试重连")
                     if self.restart_count < 3:
                         self.restart()
                     else:
-                        print(f"[MCCGUI]{self.data[5]}子进程（{self.exe.pid}）重连失败，即将自动关闭")
+                        self.window_print(f"[MCCGUI] {self.data[5]}子进程（{self.exe.pid}）重连失败，即将自动关闭", self.log)
                         self.working = False
                         self.stop()
 
                 elif command_output == "connect":
-                    print(f"[MCCGUI]父进程（{os.getpid()}）接收到{self.data[5]}子进程（{self.exe.pid}）的反馈信号\"connect\"")
+                    print(f"[DEBUG]父进程（{os.getpid()}）接收到{self.data[5]}子进程（{self.exe.pid}）的反馈信号\"connect\"")
                     if self.restart_count > 0:
                         self.restart_count = 0
-                        print(f"[MCCGUI]重连成功！重连次数已经清零{self.restart_count}/{self.max_restart_count}")
+                        self.window_print(f"[MCCGUI] 重连成功！重连次数已经清零{self.restart_count}/{self.max_restart_count}", self.log)
 
                 elif command_output == "dead":
-                    print(f"[MCCGUI]父进程（{os.getpid()}）接收到{self.data[5]}子进程（{self.exe.pid}）的反馈信号\"respawn\"")
+                    print(f"[DEBUG]父进程（{os.getpid()}）接收到{self.data[5]}子进程（{self.exe.pid}）的反馈信号\"respawn\"")
                     if self.auto_quit:
-                        print(f"[MCCGUI]已开启死亡退出，{self.data[5]}将重生并立即退出游戏。")
+                        self.window_print(f"[MCCGUI] 已开启死亡退出，{self.data[5]}将重生并立即退出游戏。", self.log)
                         self.respawn()
                         self.stop()
                         
@@ -437,7 +449,7 @@ class AccountFrame:
             if self.control_window != None and self.control_window.is_alive():
                 self.control_window.get_output(output)
         
-        self.frame.after(100,self.listen_output)
+        self.frame.after(10,self.listen_output)
 
     def update(self):
         '''刷新组件'''
@@ -448,10 +460,11 @@ class AccountFrame:
 
     def restart(self):
         self.restart_count += 1
-        self.exe.terminate()
-        self.exe = None
-        self.exe=start.MCC_Process(self.path_dic, self.in_queue, self.out_queue, self.command_queue, self.state_queue, self.data, True)
-        print(f"[MCCGUI]正在尝试重连。。。{self.restart_count}/{self.max_restart_count}")
+        if self.exe.is_alive():
+            self.close_MCC()
+        self.set_queue()
+        self.creat_process(True)
+        self.window_print(f"[MCCGUI] 正在尝试重连。。。{self.restart_count}/{self.max_restart_count}", self.log)
         self.exe.start()
         if self.control_window != None and self.control_window.is_alive():
             self.control_window.state_dic.update(self.control_window.default_state_dic)
@@ -460,8 +473,24 @@ class AccountFrame:
     def respawn(self):
         if self.working:
             self.in_queue.put("/respawn")
-            print(f"[MCCGUI]{self.data[5]}已重生")
+            self.window_print(f"[MCCGUI] {self.data[5]}已重生", self.log)
+    
+    def send_command(self, command):
+        '''向子进程发送命令'''
+        self.put_command_queue.put(command, False)
+        print(f"[DEBUG]主进程（{os.getpid()}）向子进程（{self.exe.pid}）发送信号“close_mcc”")
 
+    def close_MCC(self):
+        self.send_command("close_mcc")
+
+    def creat_process(self, if_restart = False):
+        self.exe = start.MCC_Process(self.path_dic, self.in_queue, self.out_queue, self.put_command_queue, self.get_command_queue, self.state_queue, self.data, if_restart)
+
+    def window_print(self, text, log = None):
+        '''输出内容到输出流、日志（如果有）和监听窗口'''
+        MCCGUI_print(text, log)
+        if self.control_window != None and self.control_window.is_alive():
+            self.control_window.get_output(text)
 
 class ControlWindow:
     '''控制窗口类'''
@@ -512,7 +541,6 @@ class ControlWindow:
         self.control_frame.pack(anchor=NE, fill=BOTH, padx=(0,3), pady=3)
         self.bot_state_frame = LabelFrame(self.window, text="假人状态", labelanchor="n") #假人状态框架
         self.bot_state_frame.pack(anchor=SE, fill=BOTH, padx=(0,3), pady=3)
-        
 
     def label(self):
         '''生成标签'''
@@ -578,7 +606,7 @@ class ControlWindow:
         '''发送消息'''
         text = self.text_ent.get()
         if event:
-            print("[MCCGUI]Enter键按下")
+            print("[DEBUG]Enter键按下")
         if text and self.submaster.working:
             send_text = "/send "+ text
             self.submaster.cache_message.append(text)
@@ -775,7 +803,13 @@ def creat_user_file(filename,user_data):
     if os.path.isdir(f"user/{filename}"):
         shutil.rmtree(f"user/{filename}",ignore_errors=False,onerror=None)
     shutil.copytree("config/app_default",f"config/app_data/{filename}")
-    print(f"[MCCGUI]已生成{filename}")
+    print(f"[DEBUG]已生成{filename}")
+
+def MCCGUI_print(text, log = None):
+    '''同时输出到输出流和日志(如果有的话)'''
+    print(text)
+    if log != None:
+        log.info(text)
 
 def run():
     return MCC_GUI()
