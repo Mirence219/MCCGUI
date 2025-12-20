@@ -86,7 +86,7 @@ class MCC_Process(Process):
         elif self.force_close:
             pass
         else:
-            self.put_command_queue.put("close", False)
+            self.put_command_queue.put("close", False) 
         
         self.listening_thread.join()
         self.state_thread.join()
