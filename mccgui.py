@@ -41,6 +41,8 @@ v0.6.2  1.修复了发布版本在window系统下的MCC子进程无法被正确�
         3.设计了MCCGUI的初代图标。
 v0.6.3  1.修复了多种情况下交互子进程和MCC子进程未能正确关闭的问题（包括但不限于强制关闭MCC、重连、关闭主程序）；
         2.监听窗口和日志内添加了更多的调试信息（[MCCGUI]开头的消息)。
+v0.6.4  1.新增服务器连通性检测：在账户信息界面会显示认证服务器和游戏服务器的连通性信息，包括网络延迟、连接超时、未知的主机等；
+        2.主页新增刷新按钮：点击“刷新”按钮后可以重新进行一次连通性测试，并更新连通性信息。
          
 '''
 
@@ -50,13 +52,14 @@ from nt import terminal_size
 from re import M, sub
 from statistics import variance
 from struct import pack
+import time
 from tkinter import *
 import tkinter
 import tkinter.scrolledtext
 from turtle import title
 from wsgiref import validate
 from accounts import *
-from numpy import insert, log
+from numpy import insert, log, log10
 import os
 from multiprocessing import Queue, freeze_support
 import shutil
@@ -64,6 +67,8 @@ import setini
 import start
 import logging
 import sys
+import ping3
+from threading import Thread
 
 accounts=Accounts()
 MangoCraft = True
@@ -99,11 +104,16 @@ class MCC_GUI():
 
         self.button()
         self.show_accounts()
+       
 
     def button(self):
         '''主窗口按钮初始化'''
-        self.add_account_button=Button(self.main_frame,text="添加账户",command=self.open_add_account_window)
-        self.add_account_button.pack(ipadx=5, ipady=2, pady=5)
+        self.control_frame = Frame(self.main_frame)
+        self.control_frame.pack(fill=X, padx=10)
+        self.add_account_button=Button(self.control_frame,text="添加账户",command=self.open_add_account_window)
+        self.add_account_button.pack(side=LEFT, ipadx=5, ipady=2, pady=5)
+        self.update_ping_button = Button(self.control_frame, text="刷新", command=self.ping)
+        self.update_ping_button.pack(side=RIGHT, pady=5)
 
     def open_add_account_window(self):
         '''打开添加账户窗口'''
@@ -145,6 +155,12 @@ class MCC_GUI():
             if account.exe != None:
                 account.close_MCC()
         sys.exit(0)
+
+    def ping(self):
+        '''对各个账户服务器进行连通性测试'''
+        for account in self.accounts:
+            account.ping_update()
+
 
 class AddAccount:
     '''添加账户窗口类'''
@@ -315,6 +331,9 @@ class AccountFrame:
             #formatter = logging.Formatter("%(message)s")
             #handler.setFormatter(formatter)
             self.log.addHandler(handler)
+
+        self.ping_thread = Thread(name=f"{self.data[5]}-ping_thread", target=self.ping) #连通性测试线程
+        self.ping_thread.start()
 
     def set_queue(self):
         self.in_queue = Queue()     #通过队列与MCC进程通信
@@ -491,6 +510,45 @@ class AccountFrame:
         MCCGUI_print(text, log)
         if self.control_window != None and self.control_window.is_alive():
             self.control_window.get_output(text)
+
+    def ping(self):
+        '''连通性测试'''
+        timeout = 5
+
+        self.game_server_daley = ping3.ping(self.data[3], timeout=timeout)    #单位：秒
+        if self.game_server_daley:
+            print(f"[DEBUG]{self.data[5]}游戏服务器延迟（{self.data[3]}）：{self.game_server_daley * 1000:.2f}ms")
+            self.game_server_daley_display = str(int(self.game_server_daley * 1000)) + "ms"
+        elif self.game_server_daley == False:
+            print(f"[DEBUG]{self.data[5]}游戏服务器无法连接")
+            self.game_server_daley_display = "未知的主机"
+        elif self.game_server_daley == None:
+            print(f"[DEBUG]{self.data[5]}游戏服务器连接超时")
+            self.game_server_daley_display = "连接超时"
+        
+        if self.data[0] == "Yggdrasil":
+            self.login_server_daley = ping3.ping(self.data[4], timeout=timeout)
+            if self.login_server_daley:
+                print(f"[DEBUG]{self.data[5]}认证服务器延迟（{self.data[4]}）：{self.login_server_daley * 1000:.2f}ms")
+                self.login_server_daley_display = str(int(self.login_server_daley * 1000)) + "ms"
+            elif self.login_server_daley == False:
+                print(f"[DEBUG]{self.data[5]}认证服务器无法连接")
+                self.login_server_daley_display = "未知的主机"
+            elif self.login_server_daley == None:
+                print(f"[DEBUG]{self.data[5]}认证服务器连接超时")
+                self.login_server_daley_display = "连接超时"
+        
+        self.ping_display()
+
+    def ping_display(self):
+        self.server_text.config(text=f"游戏服务器IP：{str(self.data[3])} \t延迟：{self.game_server_daley_display}")
+        if self.data[0] == "Yggdrasil":
+            self.login_server_text.config(text=f"认证服务器IP：{str(self.data[4])} \t\t延迟：{self.login_server_daley_display}")
+        
+    def ping_update(self):
+        self.ping_thread = Thread(name=f"{self.data[5]}-ping_thread", target=self.ping)  #连通性测试线程
+        self.ping_thread.start()
+
 
 class ControlWindow:
     '''控制窗口类'''
