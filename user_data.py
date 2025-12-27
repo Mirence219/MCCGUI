@@ -1,5 +1,3 @@
-# coding: utf-8
-
 import pandas as pd
 
 class Accounts:
@@ -37,3 +35,6 @@ class Accounts:
     def len(self):
         '''返回账户的数量'''
         return len(self.data);
+
+
+user_data = Accounts()

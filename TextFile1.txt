@@ -1,3 +1,38 @@
+前景色（文字颜色）
+\x1b[30m：黑色
+\x1b[31m：红色
+\x1b[32m：绿色
+\x1b[33m：黄色
+\x1b[34m：蓝色
+\x1b[35m：洋红（紫色）
+\x1b[36m：青色
+\x1b[37m：白色
+\x1b[90m-\x1b[97m：高亮（明亮）版本的前景色（如\x1b[91m为亮红色）。
+\x1b[39m：重置为默认前景色。
+背景色
+\x1b[40m-\x1b[47m：对应上述颜色的背景色（如\x1b[41m为红色背景）。
+\x1b[100m-\x1b[107m：高亮版本的背景色。
+\x1b[49m：重置为默认背景色。
+其他样式
+\x1b[1m：粗体（增加亮度）。
+\x1b[2m：弱化（降低亮度）。
+\x1b[3m：斜体。
+\x1b[4m：下划线。
+\x1b[5m：慢闪烁。
+\x1b[6m：快闪烁。
+\x1b[7m：反显（交换前景色和背景色）。
+\x1b[8m：隐藏（不可见）。
+\x1b[0m：重置所有样式（必须使用，避免后续文本继承样式）。
+
+样式（可选）：
+"normal"（默认）
+"bold"（粗体）
+"italic"（斜体）
+"bold italic"（粗斜体）
+"underline"（下划线）
+"overstrike"（删除线）
+
+
 [MCC] help <cmdname>. Available commands:
 /help [animation|bed|blockinfo|bots|changeslot|chunk|connect|debug|dig|dropitem|enchant|entity|execif|execmulti|exit|health|inventory|list|log|look|move|nameitem|reco|reload|respawn|script|send|set|setrnd|sneak|tps|upgrade|useblock|useitem]
 /animation [mainhand|offhand|_help]

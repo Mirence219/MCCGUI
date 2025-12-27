@@ -8,7 +8,8 @@ import time
 from threading import Thread
 import signal
 import sys
-from numpy import asin
+
+import utils
 
 
 class MCC_Process(Process):
@@ -157,7 +158,7 @@ class MCC_Process(Process):
                         print(ansi_text)
 
                 if allow_output:
-                    self.out_queue.put(out_text, False)
+                    self.out_queue.put(ansi_text, False)
     
     def get_state(self):
         print(f"[DEBUG]子线程{self.state_thread.name}（{self.state_thread.ident}）已就绪，获取假人{self.name}状态")

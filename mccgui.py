@@ -1,79 +1,22 @@
-'''
-Minecraft命令行工具来自MCC开发者团队，Mirence对其源码进行了部分修改以适配该MCCGUI程序
-
-v0.1    实现账户的添加、删除和账户启动
-v0.2    实现账户信息的编辑功能
-v0.3    1.改用多进程启动MCC，实现正常向MCC输入文本；
-        3.实现向服务器发送命令或消息；
-        4.统一文字编码，将所有文字改为中文。
-v0.3.1  1.仅在MCC进程启动时可以发送消息，仅未启动时可以编辑和删除账户；
-        2.MCC子进程异常关闭（非手动退出）时会自动同步关闭状态和按键；
-v0.4    1.采用多线程实现监听MCC输出;
-        2.发送功能升级为输入输出窗口,可以发送消息的同时还可以查看MCC的输出内容（包括服务器内消息）；
-v0.4.1  1.监听窗口始终可以打开，且窗口打开时可以操作主窗口;
-        2.每个账户只能打开一个监听窗口，当打开已打开的监听窗口时，会将监听窗口重新显示在屏幕顶层并聚焦；
-        3.可以同时打开多个账户的监听窗口。
-        4.过滤原MCC输出中的ANSI转移符。
-v0.4.2  1.修复了反复打开各个窗口的内存泄漏问题；
-        2.监听内容会输出到日志并保存；
-        3.在控制窗口加入控制栏，包含启动/退出键，未来可加入更多功能；
-        4.监听窗口升级为控制窗口，关闭窗口后能够继续监听MCC的输出，重新打开后会读取日志恢复先前内容，同时显示关闭窗口期间监听的内容；
-        5.MCC未启动时、发送消息为空时无法发送。
-v0.4.3  1.控制窗口内的启动按键可正常使用；
-        2.能够分辨MCC的报错输出、普通输出和服务器消息输出；
-        3.MCC报错后会立刻关闭该进程；
-v0.5    1.新增掉线自动重连功能：重新连接服务器若干次，仍然连接不成功后将会关闭进程，仅账户在线期间掉线可以触发重连，启动时的连接失败不会触发重连；
-        2.控制界面新增“重连”按钮：点击后会直接重启MCC；
-        3.优化监听窗口的内容显示：当滚动条处于最低处时会向下自动显示新的消息内容，否则保持不动。
-        4.内存优化：MCC重新启动时若上一个相同进程未关闭，则会强制关闭。
-v0.5.1  1.在控制窗口界面按下回车键可以发送内容；
-        2.发送消息后监听窗口滚动条将移到最低处;
-        3.打开监听窗口会会自动聚焦到消息发送文本框。
-v0.6    1.新增重生功能：死亡状态下“重生”按钮亮起，点击“重生”按钮可以重生；
-        2.新增假人状态显示窗口：可以显示假人当前的存活状态、生命值、饥饿值、经验值与经验等级；
-        3.报错退出优化：采用了MCC自带的报错关闭进程的机制；
-        4.重连按钮优化：仅进程开启时可以进行重连。
-v0.6.1  1.新增发送消息缓存功能：发送过的消息或命令会被缓存（关闭程序后会清空），按下按键“↑”或“↓”可以快速输入之前输入过的内容。
-        2.打开已关闭的控制窗口时会将监听窗口的滚动条移动至最下方；
-        3.修复了重连和退出游戏后假人状态不变的问题，现在假人不在线时状态显示均为未知；
-v0.6.2  1.修复了发布版本在window系统下的MCC子进程无法被正确创建的问题；
-        2.隐藏了发布版本的MCC自身弹出的命令行窗口；
-        3.设计了MCCGUI的初代图标。
-v0.6.3  1.修复了多种情况下交互子进程和MCC子进程未能正确关闭的问题（包括但不限于强制关闭MCC、重连、关闭主程序）；
-        2.监听窗口和日志内添加了更多的调试信息（[MCCGUI]开头的消息)。
-v0.6.4  1.新增服务器连通性检测：在账户信息界面会显示认证服务器和游戏服务器的连通性信息，包括网络延迟、连接超时、未知的主机等；
-        2.主页新增刷新按钮：点击“刷新”按钮后可以重新进行一次连通性测试，并更新连通性信息。
-         
-'''
-
-from genericpath import isfile
-import glob
-from nt import terminal_size
 from re import M, sub
-from statistics import variance
-from struct import pack
 import time
 from tkinter import *
-import tkinter
 import tkinter.scrolledtext
-from turtle import title
-from wsgiref import validate
-from accounts import *
-from numpy import insert, log, log10
 import os
 from multiprocessing import Queue, freeze_support
-import shutil
-import setini
-import start
+from threading import Thread
 import logging
 import sys
 import ping3
-from threading import Thread
 
-accounts=Accounts()
-MangoCraft = True
-version = "0.6.3"
 
+from user_data import user_data
+import shutil
+import setini
+import start
+from __version__ import __version__, MangoCraft
+from utils import *
+from display_text import display_text
 
 
 class MCC_GUI():
@@ -81,7 +24,7 @@ class MCC_GUI():
     def __init__(self):
         global SCREEN_WIDTH,SCREEN_HEIGHT #窗口
         self.window=Tk()
-        self.window.title("MCC GUI 可交互式工具")
+        self.window.title(f"MCC GUI 可交互式工具 v{__version__}{" 芒果方块粉丝服定制版" if MangoCraft else ""}")
         self.window.iconbitmap("bin/AppIcon.ico")
         self.window.protocol("WM_DELETE_WINDOW", self.close)    #关闭窗口后强制关闭主进程
         self.width=800
@@ -126,11 +69,11 @@ class MCC_GUI():
                 i.frame.destroy()
         self.accounts_init = True
         self.accounts=[]
-        self.count=accounts.len()
+        self.count=user_data.len()
         print("[DEBUG]账号数量",self.count)
         for i in range(self.count):
-            self.verification(accounts.read(i),i)
-            self.accounts.append(AccountFrame(self,i,accounts.read(i)))
+            self.verification(user_data.read(i),i)
+            self.accounts.append(AccountFrame(self,i,user_data.read(i)))
             self.accounts[i].frame.pack(fill="both", padx=4)
             print(f"[DEBUG]账户{i}已生成")
 
@@ -175,6 +118,7 @@ class AddAccount:
         self.window.geometry(f"{self.width}x{self.height}+{master.window.winfo_x()+(master.window.winfo_width()-self.width)//2}+{master.window.winfo_y()+(master.window.winfo_height()-self.height)//2}")  #窗口居中显示
         self.way_single_ver=StringVar() #登录方式选项初始化
         self.way_single_ver.set("Microsoft")
+        self.master = master
         if MangoCraft: self.way_single_ver.set("Yggdrasil") #芒果方块定制
         
         self.frame()
@@ -281,9 +225,10 @@ class AddAccount:
         elif not self.server:
             self.warning.config(text="游戏服务器IP不能为空！")
         else:
-            accounts.add([self.way,self.account,self.password,self.server,self.login_server,self.role])
-            app.update_account()
+            user_data.add([self.way,self.account,self.password,self.server,self.login_server,self.role])
+            self.master.update_account()
             self.window.destroy()
+
 
 class AccountFrame:
     '''账号启动框架类(存储账号的对象内容)'''
@@ -292,9 +237,6 @@ class AccountFrame:
         self.frame=LabelFrame(self.master.main_frame)
         self.number=number
         self.data=data
-
-        self.set_queue()
-
         self.control_window = None
         self.exe = None
         self.working = False
@@ -303,6 +245,8 @@ class AccountFrame:
         self.auto_respawn = True    #立即重生
         self.auto_quit = False  #死亡退出
         self.cache_message = [] #消息缓存
+
+        self.set_queue()
 
         self.listen_command()   #持续监听
         self.listen_output()
@@ -336,11 +280,16 @@ class AccountFrame:
         self.ping_thread.start()
 
     def set_queue(self):
-        self.in_queue = Queue()     #通过队列与MCC进程通信
-        self.out_queue = Queue()    #MCC输出
-        self.get_command_queue = Queue()#接受自定义命令
-        self.put_command_queue = Queue()#发送自定义命令
-        self.state_queue = Queue()  #假人状态接收
+        self.in_queue = Queue()             #通过队列与MCC进程通信
+        self.out_queue = Queue()            #MCC输出
+        self.get_command_queue = Queue()    #接受自定义命令
+        self.put_command_queue = Queue()    #发送自定义命令
+        self.state_queue = Queue()          #假人状态接收
+
+        if self.control_window != None:     #向控制窗口同步新的通信队列
+            self.control_window.in_queue = self.in_queue
+            self.control_window.out_queue = self.out_queue
+            self.control_window.state_queue = self.state_queue
 
     def button(self):
         self.start_button=Button(self.frame,text="启动",command=self.start)   #启动/退出按钮
@@ -377,8 +326,6 @@ class AccountFrame:
             if self.exe != None and self.exe.is_alive():
                 print(f"[DEBUG]上一个相同子进程（{self.exe.pid}）未结束，将强制终止")
                 self.close_MCC()
-                #self.exe.terminate()
-                #self.exe.join()
             self.set_queue()
             self.creat_process()
             self.window_print("[MCCGUI] 首次启动伊始默认不允许重连", self.log)
@@ -405,8 +352,8 @@ class AccountFrame:
 
     def delete(self):
         if not self.working:
-            accounts.delete(self.number)
-            app.update_account()
+            user_data.delete(self.number)
+            self.master.update_account()
         else:
             print("[DEBUG]进程工作中无法删除！")
 
@@ -582,7 +529,6 @@ class ControlWindow:
         self.bind()
         self.get_state()
 
-
     def spawn(self):
         '''生成组件'''
         self.frame()
@@ -619,12 +565,12 @@ class ControlWindow:
 
     def text(self):
         '''生成大型文本消息框'''
-        self.listening_scrolltext = tkinter.scrolledtext.ScrolledText(self.io_frame, state=NORMAL, width=65, height=23)
+        self.listening_scrolltext = tkinter.scrolledtext.ScrolledText(self.io_frame, state=NORMAL, width=65, height=23, bg="black", fg="white")
         self.listening_scrolltext.pack()
         log_file = open(self.log_path, "r", encoding="utf-8")
         log_text_list = log_file.readlines()
         for text in log_text_list:
-            self.listening_scrolltext.insert(END, text)    #去掉换行符
+            display_text(text.strip(), self.listening_scrolltext)    #去掉换行符
         self.listening_scrolltext.config(state=DISABLED)    #设置为只读（用户不可写入）
         self.listening_scrolltext.see(END)
 
@@ -681,7 +627,7 @@ class ControlWindow:
         if buttom == 1:
             buttom_display = True
         self.listening_scrolltext.config(state=NORMAL)
-        self.listening_scrolltext.insert(END, output + "\n")
+        display_text(output, self.listening_scrolltext)
         self.listening_scrolltext.config(state=DISABLED)
         if buttom_display:
             self.listening_scrolltext.see(END)
@@ -705,6 +651,7 @@ class ControlWindow:
             else:
                 self.respwan_button.config(state=NORMAL)
         
+        #print(self.submaster.data[5] ,self.state_dic)
         self.window.after(100, self.get_state)
 
     def update_state(self):
@@ -718,14 +665,14 @@ class ControlWindow:
     def read_cache(self, event):
         '''按下↑或↓显示缓存消息'''
         if event.keysym == "Up":
-            print("UP键被按下")
+            print("[DUBUG]UP键被按下")
             if self.cache_message_index >= 1 - len(self.submaster.cache_message):
                 self.cache_message_index -= 1
             if len(self.submaster.cache_message):
                 self.text_ent.delete(0, END)
                 self.text_ent.insert(0, self.submaster.cache_message[self.cache_message_index])
         elif event.keysym == "Down":
-            print("DOWN键被按下")
+            print("[DEBUG]DOWN键被按下")
             if self.cache_message_index < -1:
                 self.cache_message_index += 1
             if len(self.submaster.cache_message):
@@ -743,6 +690,7 @@ class EditAccount:
         self.server = data[3]
         self.login_server = data[4]
         self.role = data[5]
+        self.master = master
 
         self.window = Toplevel(master.window)
         self.window.title("编辑账户")
@@ -853,28 +801,13 @@ class EditAccount:
         elif not self.server:
             self.warning.config(text="游戏服务器IP不能为空！")
         else:
-            accounts.set(self.number, [self.way,self.account,self.password,self.server,self.login_server,self.role])
-            app.update_account()
+            user_data.set(self.number, [self.way,self.account,self.password,self.server,self.login_server,self.role])
+            self.master.update_account()
             self.window.destroy()
 
-def creat_user_file(filename,user_data):
-    if os.path.isdir(f"user/{filename}"):
-        shutil.rmtree(f"user/{filename}",ignore_errors=False,onerror=None)
-    shutil.copytree("config/app_default",f"config/app_data/{filename}")
-    print(f"[DEBUG]已生成{filename}")
 
-def MCCGUI_print(text, log = None):
-    '''同时输出到输出流和日志(如果有的话)'''
-    print(text)
-    if log != None:
-        log.info(text)
 
 def run():
     return MCC_GUI()
 
-if __name__=="__main__":
-    print(f"主进程MCCGUI_v{version} {"for MangoCraft" if MangoCraft else ""}（{os.getpid()}）已启动。")
-    freeze_support()
-    app = run()
 
-    mainloop()
