@@ -11,9 +11,20 @@ import sys
 
 import utils
 
+#代码文件名
+FILE_NAME = os.path.basename(__file__) 
 
 class MCC_Process(Process):
-    def __init__(self, path_dic, in_queue, out_queue, put_command_queue, get_command_queue, state_queue, data, allow_restart):
+    def __init__(self, 
+                 path_dic, 
+                 in_queue, 
+                 out_queue, 
+                 put_command_queue, 
+                 get_command_queue, 
+                 state_queue, 
+                 data, 
+                 allow_restart
+                 ):
         Process.__init__(self)
         self.daemon = True  #设置为守护进程（随主进程关闭）
         self.dir_path = path_dic["dir_path"]    #各个文件路径
@@ -27,7 +38,7 @@ class MCC_Process(Process):
         self.state_queue = state_queue  #通信队列，用于传递假人状态
         self.result = None
         self.data = data
-        self.name = data[5]
+        self.name = data["role_name"]
         self.ppid = os.getppid()
         self.allow_restart = allow_restart
         self.connect = False
@@ -41,10 +52,10 @@ class MCC_Process(Process):
             "total_experience" : None
             }
 
-        print(f"[DEBUG]待执行的子进程{self.name}已创建，父进程为（{self.ppid}）")
+        print(f"[DEBUG:{FILE_NAME}]待执行的子进程{self.name}已创建，父进程为（{self.ppid}）")
 
     def run(self):
-        print(f"[DEBUG]交互子进程{self.name}（{self.pid}）开始执行，父进程为（{self.ppid}）")
+        print(f"[DEBUG:{FILE_NAME}]交互子进程{self.name}（{self.pid}）开始执行，父进程为（{self.ppid}）")
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         startupinfo.wShowWindow = subprocess.SW_HIDE    #隐藏发布版本MCC的命令行窗口
@@ -66,7 +77,7 @@ class MCC_Process(Process):
             errors=None          # 编码错误处理
             )
         
-        print(f"[DEBUG]交互子进程（{self.pid}）对应MCC子进程（{self.result.pid}）")
+        print(f"[DEBUG:{FILE_NAME}]交互子进程（{self.pid}）对应MCC子进程（{self.result.pid}）")
 
         self.listening_thread = Thread(name=f"{self.name}-listening_thread", target=self.listening)   #创建线程监听MCC输出
         self.listening_thread.start()
@@ -78,7 +89,7 @@ class MCC_Process(Process):
         while self.result.poll() == None and not self.force_close:   #进程执行时循环
             if not self.in_queue.empty():   #接受队列的命令
                 send_text = self.in_queue.get(False)
-                print(f"[DEBUG]子进程{self.name}（{self.pid}）接收到命令\"{send_text}\"")
+                print(f"[DEBUG:{FILE_NAME}]子进程{self.name}（{self.pid}）接收到命令\"{send_text}\"")
                 self.result.stdin.write(send_text+"\n")
                 self.result.stdin.flush()
 
@@ -91,12 +102,12 @@ class MCC_Process(Process):
         
         self.listening_thread.join()
         self.state_thread.join()
-        print(f"[DEBUG]子进程{self.name}（{self.pid}）已终止，父进程为（{self.ppid}）,退出状态码{self.result.poll()}")
+        print(f"[DEBUG:{FILE_NAME}]子进程{self.name}（{self.pid}）已终止，父进程为（{self.ppid}）,退出状态码{self.result.poll()}")
         self.window_print("[MCCGUI] 进程已成功关闭!")
 
     def listening(self):
         '''监听子进程输出'''
-        print(f"[DEBUG]子线程{self.listening_thread.name}（{self.listening_thread.ident}）已就绪，开始监听MCC进程的输出")
+        print(f"[DEBUG:{FILE_NAME}]子线程{self.listening_thread.name}（{self.listening_thread.ident}）已就绪，开始监听MCC进程的输出")
 
         while self.result.poll() == None:
             for text in self.result.stdout: #获取MCC输出
@@ -112,7 +123,7 @@ class MCC_Process(Process):
 
                 if re.match(r"^\[ERROR\]", out_text):    #匹配输出内容
                     print(f"MCC报错>{re.sub(r"\[ERROR\]", "", ansi_text)}")
-                    print(f"[DEBUG]{self.name}子进程（{self.pid}）发生报错！")
+                    print(f"[DEBUG:{FILE_NAME}]{self.name}子进程（{self.pid}）发生报错！")
 
                 elif re.match(r"^\[MCC\]", out_text):
                         
@@ -161,7 +172,7 @@ class MCC_Process(Process):
                     self.out_queue.put(ansi_text, False)
     
     def get_state(self):
-        print(f"[DEBUG]子线程{self.state_thread.name}（{self.state_thread.ident}）已就绪，获取假人{self.name}状态")
+        print(f"[DEBUG:{FILE_NAME}]子线程{self.state_thread.name}（{self.state_thread.ident}）已就绪，获取假人{self.name}状态")
 
         while self.result.poll() == None:
             if self.connect:
@@ -171,24 +182,24 @@ class MCC_Process(Process):
     
     def get_command(self):
         '''接收主进程的命令'''
-        print(f"[DEBUG]子线程{self.get_command_thread.name}（{self.get_command_thread.ident}）已就绪，开始接收主进程（{self.ppid}）的命令")
+        print(f"[DEBUG:{FILE_NAME}]子线程{self.get_command_thread.name}（{self.get_command_thread.ident}）已就绪，开始接收主进程（{self.ppid}）的命令")
         
         while True:
             if not self.get_command_queue.empty():
                 command = self.get_command_queue.get(False)
                 if command == "close_mcc":
-                    print(f"[DEBUG]子进程（{self.pid}）接收到来自主进程的信号“close_mcc”,即将强制关闭MCC进程")
+                    print(f"[DEBUG:{FILE_NAME}]子进程（{self.pid}）接收到来自主进程的信号“close_mcc”,即将强制关闭MCC进程")
                     self.close_MCC()
 
     def close_MCC(self):
         '''强制关闭子进程和MCC'''
         print("?")
         if self.result != None:
-            print(f"[DEBUG]交互子进程（{self.pid}）和MCC子进程（{self.result.pid}）已终止")
+            print(f"[DEBUG:{FILE_NAME}]交互子进程（{self.pid}）和MCC子进程（{self.result.pid}）已终止")
             self.result.terminate()
             self.result.wait()
         else:
-            print(f"[DEBUG]交互子进程（{self.pid}）已终止")
+            print(f"[DEBUG:{FILE_NAME}]交互子进程（{self.pid}）已终止")
         self.force_close = True
 
     def window_print(self, text):

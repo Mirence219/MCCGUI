@@ -3,6 +3,10 @@
 '''
 
 from sqlite3 import *
+import os
+
+#代码文件名
+FILE_NAME = os.path.basename(__file__) 
 
 #数据库文件名字
 DB_NAME = "data.db"
@@ -13,11 +17,14 @@ class Data:
      #表名
     TABLE_NAME = ""
 
-    #表列标题
-    TABLE_COLUNMS = ""
+    #表列标题（元组）
+    TABLE_COLUMNS = ""
 
     def __init__(self):
         '''初始化表（创建和更新）'''
+
+        self._columns = tuple(col.split()[0] for col in self.TABLE_COLUMNS)
+
         conn = connect(DB_NAME)
         cursor = conn.cursor()
         self._create(conn, cursor)
@@ -28,32 +35,32 @@ class Data:
     def _create(self, conn, cursor):
         '''创建表（内部）'''
         try:
-            cursor.execute(f"CREATE TABLE {self.TABLE_NAME}({",".join(self.TABLE_COLUNMS)})")
-            print(f"[DEBUG]已创建表{self.TABLE_NAME}")
+            cursor.execute(f"CREATE TABLE {self.TABLE_NAME}({",".join(self.TABLE_COLUMNS)})")
+            print(f"[DEBUG:{FILE_NAME}]已创建表{self.TABLE_NAME}")
         except OperationalError:
-            print(f"[DEBUG]表{self.TABLE_NAME}已存在")
+            print(f"[DEBUG:{FILE_NAME}]表{self.TABLE_NAME}已存在")
         except Exception as e:
-            print(f"[DEBUG]表{self.TABLE_NAME}无法创建，报错：{e}")
+            print(f"[DEBUG:{FILE_NAME}]表{self.TABLE_NAME}无法创建，报错：{e}")
 
     def _update(self, conn, cursor):
         '''检查和更新表（内部）'''
         cursor.execute(f"PRAGMA TABLE_INFO({self.TABLE_NAME})")
         columns_info = cursor.fetchall()
-        now_columns = [col[1] for col in columns_info]
-        print(f"[DEBUG]表{self.TABLE_NAME}现有项：{now_columns}")
-        missing_columns = [col.split()[0] for col in self.TABLE_COLUNMS if col.split()[0] not in now_columns]   #和列标题列表比较得到缺失 项
+        now_columns = [col[1] for col in columns_info]  #获取当前表的字段
+        print(f"[DEBUG:{FILE_NAME}]表{self.TABLE_NAME}现有字段：{now_columns}")
+        missing_columns = [col for col in self.columns() if col not in now_columns]   #和列标题列表比较得到缺失字段
         if missing_columns:
-            print(f"[DEBUG]表{self.TABLE_NAME}缺失项：{missing_columns},即将更新")
+            print(f"[DEBUG:{FILE_NAME}]表{self.TABLE_NAME}缺失字段：{missing_columns},即将更新")
             try:
                 for col in missing_columns:
-                    cursor.execute(f"ALTER TABLE {self.TABLE_NAME} ADD COLUMN {col}")    #添加缺失项目
-                    print(f"[DEBUG]已添加项'{col}'")
+                    cursor.execute(f"ALTER TABLE {self.TABLE_NAME} ADD COLUMN {col}")    #添加缺失字段
+                    print(f"[DEBUG:{FILE_NAME}]已添加字段'{col}'")
             except Exception as e:
                 print(f"[ERROR]添加失败，报错：{e}'")
         else:
-            print(f"[DEBUG]表{self.TABLE_NAME}项完整，无需更新")
+            print(f"[DEBUG:{FILE_NAME}]表{self.TABLE_NAME}字段完整，无需更新")
 
-    def __len__(self):
+    def __len__(self) -> int:
         '''用len()获取数据行数'''
         conn = connect(DB_NAME)
         cursor = conn.cursor()
@@ -61,18 +68,112 @@ class Data:
         count = int(cursor.fetchone()[0])
         cursor.close()
         conn.close()
-        print(count)
+        #print(count)
         return count
 
+    def columns(self) -> tuple:
+        '''返回包含所有列标题的元组'''
+        return self._columns
+
     def get_all(self):
-        '''返回全部数据'''
+        '''返回全部数据（返回的是包含了字典和id的迭代器对象）'''
         conn = connect(DB_NAME)
         cursor = conn.cursor()
         cursor.execute(f"SELECT * FROM {self.TABLE_NAME}")
         all_data = cursor.fetchall()
         cursor.close()
         conn.close()
-        return all_data
+        for data in all_data:
+            data_dic = dict(zip(self.columns(), data))  #变为字典（包含id）
+            data_id = data_dic.pop("id")                #取出id单独返回
+            yield data_id, data_dic
+
+    def add(self, data_dic):
+        '''添加新数据'''
+        conn = connect(DB_NAME)
+        cursor = conn.cursor()
+
+        try:
+            columns = ",".join(data_dic.keys())
+            placeholders = " , ".join(["?"] * len(data_dic))
+            sql = f"INSERT INTO {self.TABLE_NAME} ({columns}) VALUES ({placeholders})"  #拼接SQL语句
+            values = tuple(data_dic.values())                                           #传入的参数
+            cursor.execute(sql, values)     #添加数据       
+            last_id = cursor.lastrowid      #获取刚刚插入数据的ID
+            conn.commit()
+            print(f"[DEBUG:{FILE_NAME}]已添加账户（id={last_id}）：{data_dic}")
+
+        except Exception as e:
+            conn.rollback()
+            print(f"[ERROR]添加失败，报错：{e}")
+
+        finally:
+            cursor.close()
+            conn.close()
+
+    def update(self, data_id, data_dic):
+        '''修改指定数据'''
+        conn = connect(DB_NAME)
+        cursor = conn.cursor()
+
+        try:
+            set_statement = " , ".join([f"{key} = ?" for key in data_dic.keys()])   #拼接赋值语句部分
+            sql = f"UPDATE {self.TABLE_NAME} SET {set_statement} WHERE id = ?"      
+            values = list(data_dic.values())+ [data_id]                             
+            cursor.execute(sql, values)     #修改数据
+            conn.commit()
+            print(f"[DEBUG:{FILE_NAME}]已修改账户（id={data_id}）为：{data_dic}")
+
+        except Exception as e:
+            conn.rollback()
+            print(f"[ERROR]修改账户{self.TABLE_NAME} id = {data_id}失败，报错：{e}")
+
+        finally:
+            cursor.close()
+            conn.close()
+
+    def delete(self, data_id):
+        '''删除指定数据'''
+        conn = connect(DB_NAME)
+        cursor = conn.cursor()
+
+        try:
+            sql = f"DELETE FROM {self.TABLE_NAME} WHERE id = ?"
+            value =  (data_id,)
+            cursor.execute(sql, value)  #删除数据
+            conn.commit()
+            print(f"[DEBUG:{FILE_NAME}]已删除账户（id={data_id}）")
+
+        except Exception as e:
+            conn.rollback()
+            print(f"[ERROR]删除{self.TABLE_NAME} id = {data_id}失败，报错：{e}")
+
+        finally:
+            cursor.close()
+            conn.close()
+
+    def selete_all(self, data_id) -> dict:
+        '''获取指定id的全部数据'''
+        conn = connect(DB_NAME)
+        cursor = conn.cursor()
+        print(self.columns())
+
+        try:
+            sql = f"SELECT * FROM {self.TABLE_NAME} WHERE id = ?"
+            value =  (data_id,)
+            cursor.execute(sql, value)  #查询数据
+            data_list = cursor.fetchone()
+            data_dic = dict(zip(self.columns(), data_list))
+            data_dic.pop("id")  #删除id字段
+            return data_dic
+
+        except Exception as e:
+            print(f"[ERROR]查询{self.TABLE_NAME} id = {data_id}失败，报错：{e}")
+
+        finally:
+            cursor.close()
+            conn.close()
+
 
 
 
@@ -82,7 +183,7 @@ class TestData(Data):
     TABLE_NAME = "test"
 
     #表列标题
-    TABLE_COLUNMS = [
+    TABLE_COLUMNS = (
         "id INTEGER PRIMARY KEY",                                                            
         "account TEXT",                                                                       
         "password BLOB",                                                                      
@@ -91,11 +192,7 @@ class TestData(Data):
         "login_server_ip TEXT",                                                               
         "login_server_port INTEGER",
         "hahaha TEXT"
-        ]
-
-test_data = TestData()
-print(len(test_data))
-print(test_data.get_all())
+        )
 
 
 
@@ -115,75 +212,10 @@ class UserData(Data):
         "login_server_ip TEXT",                                                               # 认证服务器域名或IP
         "login_server_port INTEGER",                                                          # 认证服务器端口
         "role_name TEXT",                                                                     # 角色名称（用于认证服务器多角色登录）
-        "method TEXT CHECK (method IN ('mojang', 'microsoft', 'yggdrasil'))",                 # 帐户类型：mojang/microsoft/yggdrasil
+        "account_type TEXT CHECK (account_type IN ('mojang', 'microsoft', 'yggdrasil'))",     # 帐户类型：mojang/microsoft/yggdrasil
     ]
 
 
-    def add(self, data_dic):
-        '''添加账户数据（直接添加一整行）'''
-        conn = connect(DB_NAME)
-        cursor = conn.cursor()
-
-        try:
-            columns = ",".join(data_dic.keys())
-            placeholders = " , ".join(["?"] * len(data_dic))
-            sql = f"INSERT INTO {self.TABLE_NAME} ({columns}) VALUES ({placeholders})"  #拼接SQL语句
-            values = tuple(data_dic.values())                                           #传入的参数
-            cursor.execute(sql, values)     #添加数据       
-            last_id = cursor.lastrowid      #获取刚刚插入数据的ID
-            conn.commit()
-            print(f"[DEBUG]已添加账户（id={last_id}）：{data_dic}")
-
-        except Exception as e:
-            conn.rollback()
-            print(f"[ERROR]添加失败，报错：{e}")
-
-        finally:
-            cursor.close()
-            conn.close()
-
-
-    def update(self, data_id, data_dic):
-        '''修改指定账户数据（修改全部）'''
-        conn = connect(DB_NAME)
-        cursor = conn.cursor()
-
-        try:
-            set_statement = " , ".join([f"{key} = ?" for key in data_dic.keys()])   #拼接赋值语句部分
-            sql = f"UPDATE {self.TABLE_NAME} SET {set_statement} WHERE id = ?"      
-            values = list(data_dic.values())+ [data_id]                             
-            cursor.execute(sql, values)     #修改数据
-            conn.commit()
-            print(f"[DEBUG]已修改账户（id={data_id}）为：{data_dic}")
-
-        except Exception as e:
-            conn.rollback()
-            print(f"[ERROR]添加失败，报错：{e}")
-
-        finally:
-            cursor.close()
-            conn.close()
-
-
-    def delete(self, data_id):
-        '''删除指定账户数据'''
-        conn = connect(DB_NAME)
-        cursor = conn.cursor()
-
-        try:
-            sql = f"DELETE FROM {self.TABLE_NAME} WHERE id = ?"
-            value =  (data_id,)
-            cursor.execute(sql, value)  #删除数据
-            conn.commit()
-            print(f"[DEBUG]已删除账户（id={data_id}）")
-
-        except Exception as e:
-            conn.rollback()
-            print(f"[ERROR]删除失败，报错：{e}")
-
-        finally:
-            cursor.close()
-            conn.close()
 
 
 class AdvancedData(Data):
@@ -234,5 +266,4 @@ class AdvancedData(Data):
     
 
 
-
-
+user_data = UserData()

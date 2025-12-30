@@ -1,13 +1,15 @@
 import shutil
 import os
 
+#代码文件名
+FILE_NAME = os.path.basename(__file__) 
 
-def creat_user_file(filename,user_data):
+def creat_user_file(filename):
     '''生成配置文件'''
     if os.path.isdir(f"user/{filename}"):
         shutil.rmtree(f"user/{filename}",ignore_errors=False,onerror=None)
     shutil.copytree("config/app_default",f"config/app_data/{filename}")
-    print(f"[DEBUG]已生成{filename}")
+    print(f"[DEBUG:{FILE_NAME}]已生成{filename}")
 
 
 def MCCGUI_print(text, log = None):
