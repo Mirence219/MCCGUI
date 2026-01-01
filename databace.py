@@ -56,7 +56,7 @@ class Data:
                     cursor.execute(f"ALTER TABLE {self.TABLE_NAME} ADD COLUMN {col}")    #添加缺失字段
                     print(f"[DEBUG:{FILE_NAME}]已添加字段'{col}'")
             except Exception as e:
-                print(f"[ERROR]添加失败，报错：{e}'")
+                print(f"[ERROR{FILE_NAME}]添加失败，报错：{e}'")
         else:
             print(f"[DEBUG:{FILE_NAME}]表{self.TABLE_NAME}字段完整，无需更新")
 
@@ -105,7 +105,7 @@ class Data:
 
         except Exception as e:
             conn.rollback()
-            print(f"[ERROR]添加失败，报错：{e}")
+            print(f"[ERROR{FILE_NAME}]添加失败，报错：{e}")
 
         finally:
             cursor.close()
@@ -126,7 +126,7 @@ class Data:
 
         except Exception as e:
             conn.rollback()
-            print(f"[ERROR]修改账户{self.TABLE_NAME} id = {data_id}失败，报错：{e}")
+            print(f"[ERROR{FILE_NAME}]修改账户{self.TABLE_NAME} id = {data_id}失败，报错：{e}")
 
         finally:
             cursor.close()
@@ -146,7 +146,7 @@ class Data:
 
         except Exception as e:
             conn.rollback()
-            print(f"[ERROR]删除{self.TABLE_NAME} id = {data_id}失败，报错：{e}")
+            print(f"[ERROR{FILE_NAME}]删除{self.TABLE_NAME} id = {data_id}失败，报错：{e}")
 
         finally:
             cursor.close()
@@ -168,7 +168,7 @@ class Data:
             return data_dic
 
         except Exception as e:
-            print(f"[ERROR]查询{self.TABLE_NAME} id = {data_id}失败，报错：{e}")
+            print(f"[ERROR{FILE_NAME}]查询{self.TABLE_NAME} id = {data_id}失败，报错：{e}")
 
         finally:
             cursor.close()

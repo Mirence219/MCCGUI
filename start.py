@@ -79,19 +79,18 @@ class MCC_Process(Process):
         
         print(f"[DEBUG:{FILE_NAME}]交互子进程（{self.pid}）对应MCC子进程（{self.result.pid}）")
 
+
+        self.input_thread = Thread(name=f"{self.name}-input_thread", target=self.input)     #创建线程向MCC输入内容
+        self.input_thread.start()
         self.listening_thread = Thread(name=f"{self.name}-listening_thread", target=self.listening)   #创建线程监听MCC输出
         self.listening_thread.start()
-        self.state_thread = Thread(name=f"{self.name}-state_thread", target=self.get_state)   #创建线程实时获取假人信息
-        self.state_thread.start()
+        #self.state_thread = Thread(name=f"{self.name}-state_thread", target=self.get_state)   #创建线程实时获取假人信息
+        #self.state_thread.start()
         self.get_command_thread = Thread(name=f"{self.name}-get_command_thread", target=self.get_command)    #创建线程接收主进程命令
         self.get_command_thread.start()
 
-        while self.result.poll() == None and not self.force_close:   #进程执行时循环
-            if not self.in_queue.empty():   #接受队列的命令
-                send_text = self.in_queue.get(False)
-                print(f"[DEBUG:{FILE_NAME}]子进程{self.name}（{self.pid}）接收到命令\"{send_text}\"")
-                self.result.stdin.write(send_text+"\n")
-                self.result.stdin.flush()
+        while self.result.poll() == None and not self.force_close:
+            pass
 
         if self.allow_restart:
             self.put_command_queue.put("restart", False)
@@ -104,6 +103,18 @@ class MCC_Process(Process):
         self.state_thread.join()
         print(f"[DEBUG:{FILE_NAME}]子进程{self.name}（{self.pid}）已终止，父进程为（{self.ppid}）,退出状态码{self.result.poll()}")
         self.window_print("[MCCGUI] 进程已成功关闭!")
+    
+
+    def input(self):
+        '''向MCC输入内容'''
+        print(f"[DEBUG:{FILE_NAME}]子线程{self.input_thread.name}（{self.input_thread.ident}）已就绪，准备向MCC输入内容")
+        while self.result.poll() == None:               #进程执行时循环
+            if not self.in_queue.empty():               #接受队列的命令
+                send_text = self.in_queue.get(False)
+                print(f"[DEBUG:{FILE_NAME}]子进程{self.name}（{self.pid}）接收到命令\"{send_text}\"")
+                self.result.stdin.write(send_text + "\n")
+                self.result.stdin.flush()
+                print("已发送")
 
     def listening(self):
         '''监听子进程输出'''
@@ -125,7 +136,7 @@ class MCC_Process(Process):
                     print(f"MCC报错>{re.sub(r"\[ERROR\]", "", ansi_text)}")
                     print(f"[DEBUG:{FILE_NAME}]{self.name}子进程（{self.pid}）发生报错！")
 
-                elif re.match(r"^\[MCC\]", out_text):
+                elif re.match(r"^\[MCC\]", out_text):   #匹配MCC消息
                         
 
                     if out_text == "[MCC] Connection has been lost.":
@@ -164,6 +175,10 @@ class MCC_Process(Process):
                         self.allow_restart = True
                         self.connect = True
                         self.put_command_queue.put("connect", False)
+                    
+                    if out_text == r"Paste your code here:":
+                        self.window_print("[MCCGUI] 请在浏览器登入后在验证窗口中输入口令码")
+                        self.put_command_queue.put("oauth20", False)
 
                     if allow_output:
                         print(ansi_text)
@@ -193,13 +208,16 @@ class MCC_Process(Process):
 
     def close_MCC(self):
         '''强制关闭子进程和MCC'''
-        print("?")
         if self.result != None:
-            print(f"[DEBUG:{FILE_NAME}]交互子进程（{self.pid}）和MCC子进程（{self.result.pid}）已终止")
+            self.result.stdin.close()
+            self.result.stdout.close()
+            self.result.stderr.close()
             self.result.terminate()
             self.result.wait()
+            print(f"[DEBUG:{FILE_NAME}]交互子进程（{self.pid}）和MCC子进程（{self.result.pid}）已终止")
         else:
             print(f"[DEBUG:{FILE_NAME}]交互子进程（{self.pid}）已终止")
+
         self.force_close = True
 
     def window_print(self, text):

@@ -322,9 +322,11 @@ class EditAccount(AddAccount):
         self.account_ent.insert(0, self.account)
         self.password_ent.insert(0, self.password)
         self.game_server_ip_ent.insert(0, self.game_server_ip)
+        self.game_server_port_ent.insert(0, self.game_server_port)
 
         if self.account_type =="yggdrasil": 
             self.login_server_ip_ent.insert(0, self.login_server_ip)
+            self.login_server_port_ent.insert(0, self.login_server_port)
             self.role_name_ent.insert(0, self.role_name)
 
     def button(self):
@@ -412,24 +414,24 @@ class AccountFrame:
 
     def text(self):
         if self.data["account_type"]=="microsoft":
-            self.account_text=Label(self.frame,text="正版账户："+str(self.data["account"]))
+            self.account_text=Label(self.frame,text="正版账户：" + self.data["account"])
             self.account_text.pack(anchor="w")
-            self.game_server_ip_text=Label(self.frame,text="游戏服务器IP："+str(self.data["game_server_ip"]))
+            self.game_server_ip_text=Label(self.frame,text="游戏服务器IP：" + self.data["game_server_ip"])
             self.game_server_ip_text.pack(anchor="w")
         else:
-            self.account_text=Label(self.frame,text="认证服务器账户："+str(self.data["account"]))
+            self.account_text=Label(self.frame,text="认证服务器账户："+ self.data["account"])
             self.account_text.pack(anchor="w")
-            self.login_server_ip_text=Label(self.frame,text="认证服务器IP："+str(self.data["login_server_ip"]))
+            self.login_server_ip_text=Label(self.frame,text="认证服务器IP：" + self.data["login_server_ip"])
             self.login_server_ip_text.pack(anchor="w")
-            self.game_server_ip_text=Label(self.frame,text="游戏服务器IP："+str(self.data["game_server_ip"]))
+            self.game_server_ip_text=Label(self.frame,text="游戏服务器IP：" + self.data["game_server_ip"])
             self.game_server_ip_text.pack(anchor="w")
-            self.role_name_text=Label(self.frame,text="角色名："+str(self.data["role_name"]))
+            self.role_name_text=Label(self.frame,text="角色名：" + self.data["role_name"])
             self.role_name_text.pack(anchor="w")
 
     def start(self):
         if not self.working:
             self.start_button.config(text="退出")
-            set_toml.set_user_data(self.data,self.path_dic["ini_path"])
+            set_toml.set_user_data(self.data, self.path_dic["ini_path"])
             if self.exe != None and self.exe.is_alive():
                 print(f"[DEBUG:{FILE_NAME}]上一个相同子进程（{self.exe.pid}）未结束，将强制终止")
                 self.close_MCC()
@@ -509,9 +511,12 @@ class AccountFrame:
                         self.window_print(f"[MCCGUI] 已开启死亡退出，{self.data["role_name"]}将重生并立即退出游戏。", self.log)
                         self.respawn()
                         self.stop()
+
+                elif command_output == "oauth20":
+                    print(f"[DEBUG:{FILE_NAME}]父进程（{os.getpid()}）接收到{self.data["role_name"]}子进程（{self.exe.pid}）的反馈信号\"oauth20\"")
+                    self.control()
+                    self.control_window.open_oauth20_window()
                         
-
-
         self.frame.after(100,self.listen_command)
 
     def listen_output(self):
@@ -730,10 +735,10 @@ class ControlWindow:
         if event:
             print(f"[DEBUG:{FILE_NAME}]Enter键按下")
         if text and self.submaster.working:
-            send_text = "/send "+ text
+            send_text = text
             self.submaster.cache_message.append(text)
             self.cache_message_index = 0
-            self.in_queue.put(send_text, False)
+            self.in_queue.put("/send " + send_text, False)
             self.text_ent.delete(0, END)
             self.listening_scrolltext.see(END)
             print(self.submaster.cache_message)
@@ -796,7 +801,65 @@ class ControlWindow:
             if len(self.submaster.cache_message):
                 self.text_ent.delete(0, END)
                 self.text_ent.insert(0, self.submaster.cache_message[self.cache_message_index])
-            
+
+    def open_oauth20_window(self):
+        '''打开OAuth2.0令牌登录口令接收窗口'''
+        self.oauth20_window = OAuth20Window(self, self.in_queue)
+
+class OAuth20Window:
+    '''OAuth2.0令牌登录口令接收窗口类'''
+    def __init__(self, master, queue):
+        self.window = Toplevel(master.window)
+        self.window.title("输入口令内容以登录")
+        self.WIDTH = 220
+        self.HEIGHT = 130
+        master.window.update()
+        self.window.geometry(f"{self.WIDTH}x{self.HEIGHT}+{master.window.winfo_x() +(master.window.winfo_width()-self.WIDTH)//2}+{master.window.winfo_y()+(master.window.winfo_height()-self.HEIGHT)//2}")  #窗口居中显示
+        self.window.grab_set()
+        self.window.resizable(False,False)
+
+        self.queue = queue
+
+        self.spawn()
+
+    def spawn(self):
+        self.init_lable()
+        self.display()
+    
+    def init_lable(self):
+        '''初始化组件'''
+        self.ent()
+        self.lable()
+        self.button()
+
+    def display(self):
+        '''显示组件'''
+        self.text_lable.pack()
+        self.code_ent.pack()
+        self.send_button.pack()
+
+    def ent(self):
+        '''文本框'''
+        self.code_ent = Entry(self.window)
+
+    def lable(self):
+        '''普通组件'''
+        self.text_lable = Label(self.window, text="请输入在浏览器登录正版账户后\n由MCC官网提供的口令码：")
+
+    def button(self):
+        '''按钮'''
+        self.send_button = Button(self.window, text="确认", command=self.send_code)
+
+    def send_code(self):
+        '''发送口令'''
+        code = self.code_ent.get()
+        if code:
+            self.queue.put(code, False)
+            self.window.destroy()
+        
+
+
+
 
 def run():
     return MCC_GUI()
