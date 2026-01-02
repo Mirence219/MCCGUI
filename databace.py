@@ -9,7 +9,7 @@ import os
 FILE_NAME = os.path.basename(__file__) 
 
 #数据库文件名字
-DB_NAME = "data.db"
+DB_NAME = os.path.join("config", "data.db")
 
 
 class Data:
@@ -212,7 +212,7 @@ class UserData(Data):
         "login_server_ip TEXT",                                                               # 认证服务器域名或IP
         "login_server_port INTEGER",                                                          # 认证服务器端口
         "role_name TEXT",                                                                     # 角色名称（用于认证服务器多角色登录）
-        "account_type TEXT CHECK (account_type IN ('mojang', 'microsoft', 'yggdrasil'))",     # 帐户类型：mojang/microsoft/yggdrasil
+        "account_type TEXT CHECK (account_type IN ('microsoft', 'yggdrasil', 'offline'))",     # 帐户类型：mojang/microsoft/yggdrasil
     ]
 
 

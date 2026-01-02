@@ -1,15 +1,31 @@
+from ntpath import isfile
 import shutil
 import os
 
 #代码文件名
 FILE_NAME = os.path.basename(__file__) 
 
-def creat_user_file(filename):
+def creat_user_file(path):
     '''生成配置文件'''
-    if os.path.isdir(f"user/{filename}"):
-        shutil.rmtree(f"user/{filename}",ignore_errors=False,onerror=None)
-    shutil.copytree("config/app_default",f"config/app_data/{filename}")
-    print(f"[DEBUG:{FILE_NAME}]已生成{filename}")
+    f"[DEBUG:{FILE_NAME}]已删除{path}"
+    try:
+        if os.path.isfile(path):
+            shutil.rmtree(path, ignore_errors=False, onerror=None)
+        shutil.copytree("config/app_default",path)
+        print(f"[DEBUG:{FILE_NAME}]已生成{path}")
+    except Exception as e:
+        print(f"[ERROR:{FILE_NAME}]创建{path}失败，报错{e}")
+
+def delete_user_file(path):
+    '''删除配置文件'''
+    try:
+        if os.path.isdir(path):
+            shutil.rmtree(path, ignore_errors=False, onerror=None)
+            print(f"[DEBUG:{FILE_NAME}]已删除{path}")
+        else:
+            print(f"[DEBUG:{FILE_NAME}]未检测到{path}")
+    except Exception as e:
+        print(f"[ERROR:{FILE_NAME}]删除{path}失败，报错{e}")
 
 
 def MCCGUI_print(text, log = None):

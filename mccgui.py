@@ -1,3 +1,5 @@
+from ntpath import join
+import os.path
 from re import M, sub
 import time
 from tkinter import *
@@ -16,10 +18,11 @@ import start
 from __version__ import __version__, MangoCraft
 from utils import *
 from display_text import display_text
+import utils
 
 #代码文件名
-FILE_NAME = os.path.basename(__file__)  
-
+FILE_NAME = os.path.basename(__file__)
+MCC_PATH = os.path.join("bin", "MinecraftClient.exe")
 USER_DATA_COLUMNS = list(user_data.columns())
 USER_DATA_COLUMNS.pop(0)                #去掉id字段的字段名的列表
 
@@ -93,7 +96,8 @@ class MCC_GUI():
             if os.path.isfile(f"config/app_data/{num}/MinecraftClient.exe"):
                 flag=True
         if not flag:
-            creat_user_file(num)
+            path = os.path.join("config", "app_data", num)
+            creat_user_file(path)
     
     def close(self):
         print(f"用户关闭主窗口，主进程以及所有子进程都将将强制关闭！")
@@ -107,6 +111,7 @@ class MCC_GUI():
         '''对各个账户服务器进行连通性测试'''
         for account in self.accounts:
             account.ping_update()
+            account.ping_display()
 
 
 class AddAccount:
@@ -157,36 +162,50 @@ class AddAccount:
 
     def ent(self):
         '''选择器、文本框'''
+        account_type = self.account_type_single_ver.get()
         self.row=0
 
         self.account_type_label=Label(self.frame1,text="登录方式:", anchor=E)  #登录方式
         self.account_type_label.grid(row=self.row,column=0, pady = 5)
-        self.account_type1_single=Radiobutton(self.frame1,text="正版账户",variable=self.account_type_single_ver,value="microsoft",command=self.update)
-        self.account_type1_single.grid(row=self.row,column=1, pady = 5)
-        self.account_type2_single=Radiobutton(self.frame1,text="第三方认证账户",variable=self.account_type_single_ver,value="yggdrasil",command=self.update)
-        self.account_type2_single.grid(row=self.row,column=2, pady = 5)
-
+        self.account_type_microsoft_single=Radiobutton(self.frame1,text="正版账户",variable=self.account_type_single_ver,value="microsoft",command=self.update)
+        self.account_type_microsoft_single.grid(row=self.row,column=1, pady = 5)
+        self.account_type_yggdrasil_single=Radiobutton(self.frame1,text="第三方认证账户",variable=self.account_type_single_ver,value="yggdrasil",command=self.update)
+        self.account_type_yggdrasil_single.grid(row=self.row,column=2, pady = 5)
+        self.account_type_offline_single=Radiobutton(self.frame1,text="离线账户",variable=self.account_type_single_ver,value="offline",command=self.update)
+        self.account_type_offline_single.grid(row=self.row,column=3, pady = 5)
         self.row+=1
 
-        self.account_label=Label(self.frame2,text="账号:", anchor=E) #账号
+        self.account_label=Label(self.frame2,text="账号:", anchor=E)  #账号
         self.account_label.grid(row=self.row,column=0, pady = 5)
         self.account_ent=Entry(self.frame2, width=self.ENTRY_WIDTH)
         self.account_ent.grid(row=self.row,column=1, pady = 5)
 
         self.row+=1
 
-        self.password_label=Label(self.frame2,text="密码:", anchor=E) #密码
-        self.password_label.grid(row=self.row,column=0, pady = 5)
-        self.password_ent=Entry(self.frame2, show="*", width=self.ENTRY_WIDTH)
-        self.password_ent.grid(row=self.row,column=1, pady = 5)
+        if account_type == "microsoft":
+            self.account_label=Label(self.frame2,text="正版账户首次启动时需要跳转至浏览器登录")  #正版账号提示
+            self.account_label.grid(row=self.row, column=0, columnspan=4, pady = 5)
 
-        self.row+=1
+            self.row+=1
+
+        if account_type == "offline":
+            self.account_label=Label(self.frame2,text="离线账户以账户名为角色名")  #正版账号提示
+            self.account_label.grid(row=self.row, column=0, columnspan=4, pady = 5)
+
+            self.row+=1
+
+        if account_type == "yggdrasil":
+            self.password_label=Label(self.frame2,text="密码:", anchor=E) #密码
+            self.password_label.grid(row=self.row,column=0, pady = 5)
+            self.password_ent=Entry(self.frame2, show="*", width=self.ENTRY_WIDTH)
+            self.password_ent.grid(row=self.row,column=1, pady = 5)
+
+            self.row+=1
 
         self.game_server_ip_label=Label(self.frame2,text="游戏服务器IP:", anchor=E) #服务器IP
         self.game_server_ip_label.grid(row=self.row,column=0, pady = 5)
         self.game_server_ip_ent=Entry(self.frame2, width=self.ENTRY_WIDTH)
         self.game_server_ip_ent.grid(row=self.row,column=1, pady = 5)
-        
 
         self.game_server_port_label=Label(self.frame2,text="端口:", anchor=E) #服务器端口
         self.game_server_port_label.grid(row=self.row, column=2, pady=5, padx=5)
@@ -194,26 +213,17 @@ class AddAccount:
         self.game_server_port_ent.grid(row=self.row, column=3, pady = 5)
 
         self.row+=1
-
-        if MangoCraft and self.__class__.__name__ == "AddAccount":   #芒果方块定制
-            self.game_server_ip_ent.insert(0, "bot.server.mangocraft.cn")
-            self.game_server_port_ent.insert(0, "8080")
-
-        if self.account_type_single_ver.get()=="yggdrasil": 
+        
+        if account_type == "yggdrasil":
             self.login_server_ip_label=Label(self.frame2,text="认证服务器IP:", anchor=E)  #认证服务器
             self.login_server_ip_label.grid(row=self.row,column=0, pady = 5)
             self.login_server_ip_ent=Entry(self.frame2, width=self.ENTRY_WIDTH)
-            self.login_server_ip_ent.grid(row=self.row,column=1, pady = 5)   
-            
+            self.login_server_ip_ent.grid(row=self.row,column=1, pady = 5)  
 
             self.login_server_port_label=Label(self.frame2,text="端口:", anchor=E) #认证服务器端口
             self.login_server_port_label.grid(row=self.row, column=2, pady = 5)
             self.login_server_port_ent=Entry(self.frame2, width=self.PORT_ENTRY_WIDTH)
             self.login_server_port_ent.grid(row=self.row, column=3, pady = 5)
-
-            if MangoCraft and self.__class__.__name__ == "AddAccount":   #芒果方块定制
-                self.login_server_ip_ent.insert(0, "skin.prinzeugen.net")   
-                self.login_server_port_ent.insert(0, "443") 
 
             self.row+=1
 
@@ -223,6 +233,14 @@ class AddAccount:
             self.role_name_ent.grid(row=self.row,column=1, pady = 5)
 
             self.row+=1
+
+        if MangoCraft and self.__class__.__name__ == "AddAccount":   #芒果方块定制
+            if account_type in ("microsoft", "yggdrasil"):
+                self.game_server_ip_ent.insert(0, "bot.server.mangocraft.cn")
+                self.game_server_port_ent.insert(0, "35553")
+            if account_type == "yggdrasil":
+                self.login_server_ip_ent.insert(0, "skin.prinzeugen.net")   
+                self.login_server_port_ent.insert(0, "443") 
 
     def button(self):
         '''按钮'''
@@ -250,12 +268,12 @@ class AddAccount:
         account_type=self.account_type_single_ver.get()             #读取输入同时验证是否留空
 
         if account_type == "yggdrasil":
+           password = self.password_ent.get()
            login_server_ip = self.login_server_ip_ent.get()
            login_server_port = self.login_server_port_ent.get()
            role_name = self.role_name_ent.get()
 
         account = self.account_ent.get()
-        password = self.password_ent.get()
         game_server_ip = self.game_server_ip_ent.get()
         game_server_port = self.game_server_port_ent.get()
 
@@ -263,7 +281,7 @@ class AddAccount:
             self.warning.config(text="认证服务器IP不能为空！")
         elif not account:
             self.warning.config(text="账号不能为空！")
-        elif not password:
+        elif account_type=="yggdrasil" and not password:
             self.warning.config(text="密码不能为空！")
         elif not game_server_ip:
             self.warning.config(text="游戏服务器IP不能为空！")
@@ -287,13 +305,11 @@ class AddAccount:
         '''添加账户（继承后可以重写）'''
         user_data.add(new_user_data_dic)
 
-
 class EditAccount(AddAccount):
     '''编辑账户窗口类（继承自添加账户窗口）'''
     def __init__(self, master, data_id, data):
         self.id = data_id
         self.account = data["account"]
-        self.password = data["password"]
         self.game_server_ip = data["game_server_ip"]
         self.game_server_port = data["game_server_port"]
         self.login_server_ip = data["login_server_ip"]
@@ -314,13 +330,17 @@ class EditAccount(AddAccount):
     def ent(self):
         '''选择器、文本框（增加）'''
         AddAccount.ent(self)
+        self.account_type_microsoft_single.grid_forget()    #隐藏组件
+        self.account_type_yggdrasil_single.grid_forget()
+        self.account_type_offline_single.grid_forget()
         if self.account_type == "microsoft":
-            self.account_type1_single.grid(row=0,column=1)
+            self.account_type_microsoft_single.grid(row=0,column=2)
         elif self.account_type == "yggdrasil":
-            self.account_type2_single.grid(row=0,column=1)
+            self.account_type_yggdrasil_single.grid(row=0,column=2)
+        elif self.account_type == "offline":
+            self.account_type_offline_single.grid(row=0, column=2)
 
         self.account_ent.insert(0, self.account)
-        self.password_ent.insert(0, self.password)
         self.game_server_ip_ent.insert(0, self.game_server_ip)
         self.game_server_port_ent.insert(0, self.game_server_port)
 
@@ -337,7 +357,6 @@ class EditAccount(AddAccount):
     def run(self, new_user_data_dic):
         '''提交修改账户（重写）'''
         user_data.update(self.id, new_user_data_dic)
-
 
 class AccountFrame:
     '''账号启动框架类(存储账号的对象内容)'''
@@ -362,18 +381,25 @@ class AccountFrame:
 
         self.button()   #生成组件
         self.text()
+        self.ping_update()
 
-        self.filename=num=str(self.id+1000)[1:]
+        self.filename = str(self.id+1000)[1:]
         self.path_dic = {
-                         "ini_path":f"config/app_data/{self.filename}/MinecraftClient.ini",
-                         "exe_path":f"config/app_data/{self.filename}/MinecraftClient.exe",
-                         "log_path":f"config/app_data/{self.filename}/listening.log",
-                         "dir_path":f"config/app_data/{self.filename}"
+                         "ini_path" : os.path.join("config", "app_data", self.filename, "MinecraftClient.ini"),
+                         "exe_path" : MCC_PATH,
+                         "log_path" : os.path.join("config", "app_data", self.filename, "listening.log"),
+                         "dir_path" : os.path.join("config", "app_data", self.filename)
                          }
 
         self.log = logging.getLogger(f"AccountFrame_{self.id}")
         self.log.setLevel(logging.INFO)
+
+        self.ping_init()
+        self.ping_display()
+        #self.ping_update()
         
+    def start_handler(self):
+        '''启动日志'''
         # 动态添加 FileHandler（避免重复添加）
         if not self.log.handlers:
             handler = logging.FileHandler(
@@ -385,8 +411,19 @@ class AccountFrame:
             #handler.setFormatter(formatter)
             self.log.addHandler(handler)
 
-        self.ping_thread = Thread(name=f"{self.data["role_name"]}-ping_thread", target=self.ping) #连通性测试线程
-        self.ping_thread.start()
+    def close_handler(self):
+        '''关闭日志调用'''
+        for handler in self.log.handlers[:]:
+            # 只处理FileHandler（避免误关其他处理器，如StreamHandler控制台输出）
+            if isinstance(handler, logging.FileHandler):
+                try:
+                    # 步骤1：关闭处理器，释放文件句柄
+                    handler.close()
+                    # 步骤2：从日志器中移除处理器
+                    self.log.removeHandler(handler)
+                    print(f"[DEBUG:{FILE_NAME}] 已关闭并移除FileHandler，释放文件：{handler.baseFilename}")
+                except Exception as e:
+                    print(f"[ERROR:{FILE_NAME}] 关闭FileHandler失败：{e}")
 
     def set_queue(self):
         self.in_queue = Queue()             #通过队列与MCC进程通信
@@ -418,7 +455,7 @@ class AccountFrame:
             self.account_text.pack(anchor="w")
             self.game_server_ip_text=Label(self.frame,text="游戏服务器IP：" + self.data["game_server_ip"])
             self.game_server_ip_text.pack(anchor="w")
-        else:
+        elif self.data["account_type"]=="yggdrasil":
             self.account_text=Label(self.frame,text="认证服务器账户："+ self.data["account"])
             self.account_text.pack(anchor="w")
             self.login_server_ip_text=Label(self.frame,text="认证服务器IP：" + self.data["login_server_ip"])
@@ -427,9 +464,15 @@ class AccountFrame:
             self.game_server_ip_text.pack(anchor="w")
             self.role_name_text=Label(self.frame,text="角色名：" + self.data["role_name"])
             self.role_name_text.pack(anchor="w")
+        elif self.data["account_type"]=="offline":
+            self.account_text=Label(self.frame,text="离线账户：" + self.data["account"])
+            self.account_text.pack(anchor="w")
+            self.game_server_ip_text=Label(self.frame,text="游戏服务器IP：" + self.data["game_server_ip"])
+            self.game_server_ip_text.pack(anchor="w")
 
     def start(self):
         if not self.working:
+            self.start_handler()
             self.start_button.config(text="退出")
             set_toml.set_user_data(self.data, self.path_dic["ini_path"])
             if self.exe != None and self.exe.is_alive():
@@ -453,6 +496,8 @@ class AccountFrame:
             self.in_queue.put("/quit",False)
         self.working = False
         self.window_print("[MCCGUI] 正在退出。。。", self.log)
+        self.close_handler()
+        set_toml.clear_password()
         if self.control_window != None and self.control_window.is_alive():
             self.control_window.start_button.config(text="启动")
             self.control_window.reco_button.config(state=DISABLED)
@@ -462,6 +507,7 @@ class AccountFrame:
     def delete(self):
         if not self.working:
             user_data.delete(self.id)
+            utils.delete_user_file(self.path_dic["dir_path"])
             self.master.update_account()
         else:
             print(f"[DEBUG:{FILE_NAME}]进程工作中无法删除！")
@@ -607,18 +653,26 @@ class AccountFrame:
             elif self.login_server_daley == None:
                 print(f"[DEBUG:{FILE_NAME}]{self.data["role_name"]}认证服务器连接超时")
                 self.login_server_daley_display = "连接超时"
-        
+            
         self.ping_display()
 
     def ping_display(self):
-        self.game_server_ip_text.config(text=f"游戏服务器IP：{str(self.data["game_server_ip"])} \t延迟：{self.game_server_daley_display}")
-        if self.data["account_type"] == "yggdrasil":
-            self.login_server_ip_text.config(text=f"认证服务器IP：{str(self.data["login_server_ip"])} \t\t延迟：{self.login_server_daley_display}")
-        
+        try:
+            if self.game_server_ip_text:
+                self.game_server_ip_text.config(text=f"游戏服务器IP：{str(self.data["game_server_ip"])} \t延迟：{self.game_server_daley_display}")
+            if self.data["account_type"] == "yggdrasil" and self.login_server_ip_text:
+                self.login_server_ip_text.config(text=f"认证服务器IP：{str(self.data["login_server_ip"])} \t\t延迟：{self.login_server_daley_display}")
+        except Exception as e:
+            print(f"[ERROR:{FILE_NAME}]PING无法显示，报错：{e}")
+
     def ping_update(self):
         self.ping_thread = Thread(name=f"{self.data["role_name"]}-ping_thread", target=self.ping)  #连通性测试线程
         self.ping_thread.start()
 
+    def ping_init(self):
+        '''初始化Ping相关变量'''
+        self.game_server_daley_display = "正在连接"
+        self.login_server_daley_display = "正在连接"
 
 class ControlWindow:
     '''控制窗口类'''
@@ -690,10 +744,17 @@ class ControlWindow:
         '''生成大型文本消息框'''
         self.listening_scrolltext = tkinter.scrolledtext.ScrolledText(self.io_frame, state=NORMAL, width=65, height=23, bg="black", fg="white")
         self.listening_scrolltext.pack()
-        log_file = open(self.log_path, "r", encoding="utf-8")
-        log_text_list = log_file.readlines()
-        for text in log_text_list:
-            display_text(text.strip(), self.listening_scrolltext)    #去掉换行符
+        try:
+            if os.path.isfile(self.log_path):
+                with open(self.log_path, "r", encoding="utf-8") as log_file:
+                    log_text_list = log_file.readlines()
+                for text in log_text_list:
+                    display_text(text.strip(), self.listening_scrolltext)    #去掉换行符
+            else:
+                print(f"[WRONING:{FILE_NAME}]日志{self.log_path}不存在")
+        except Exception as e:
+            print(f"[ERROR:{FILE_NAME}]日志{self.log_path}打开失败，报错：{e}")
+        
         self.listening_scrolltext.config(state=DISABLED)    #设置为只读（用户不可写入）
         self.listening_scrolltext.see(END)
 
@@ -738,10 +799,9 @@ class ControlWindow:
             send_text = text
             self.submaster.cache_message.append(text)
             self.cache_message_index = 0
-            self.in_queue.put("/send " + send_text, False)
+            self.in_queue.put(send_text, False)
             self.text_ent.delete(0, END)
             self.listening_scrolltext.see(END)
-            print(self.submaster.cache_message)
 
     def get_output(self, output):
         '''接收监听内容并显示'''
@@ -819,6 +879,7 @@ class OAuth20Window:
         self.window.resizable(False,False)
 
         self.queue = queue
+        self.master = master
 
         self.spawn()
 
@@ -837,6 +898,7 @@ class OAuth20Window:
         self.text_lable.pack()
         self.code_ent.pack()
         self.send_button.pack()
+        self.cancel_button.pack(expand=True)
 
     def ent(self):
         '''文本框'''
@@ -849,6 +911,7 @@ class OAuth20Window:
     def button(self):
         '''按钮'''
         self.send_button = Button(self.window, text="确认", command=self.send_code)
+        self.cancel_button = Button(self.window, text="取消", command=self.cancel)
 
     def send_code(self):
         '''发送口令'''
@@ -856,6 +919,10 @@ class OAuth20Window:
         if code:
             self.queue.put(code, False)
             self.window.destroy()
+
+    def cancel(self):
+        self.window.destroy()
+        self.master.submaster.quit()
         
 
 
