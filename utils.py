@@ -22,10 +22,13 @@ def delete_user_file(path):
         if os.path.isdir(path):
             shutil.rmtree(path, ignore_errors=False, onerror=None)
             print(f"[DEBUG:{FILE_NAME}]已删除{path}")
+            return 0
         else:
             print(f"[DEBUG:{FILE_NAME}]未检测到{path}")
+            return 1
     except Exception as e:
         print(f"[ERROR:{FILE_NAME}]删除{path}失败，报错{e}")
+        return -1
 
 
 def MCCGUI_print(text, log = None):

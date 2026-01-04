@@ -10,6 +10,7 @@ import signal
 import sys
 
 
+import set_toml
 import utils
 
 #代码文件名
@@ -44,6 +45,7 @@ class MCC_Process(Process):
         self.allow_restart = allow_restart
         self.connect = False
         self.force_close = False
+        self.close_thread = False
 
         self.state_dic =   {
             "alive" : None,
@@ -84,14 +86,17 @@ class MCC_Process(Process):
 
             self.input_thread = Thread(name=f"{self.name}-input_thread", target=self.input_text)     #创建线程向MCC输入内容
             self.input_thread.start()
+
             self.listening_thread = Thread(name=f"{self.name}-listening_thread", target=self.listening)   #创建线程监听MCC输出
             self.listening_thread.start()
-            #self.state_thread = Thread(name=f"{self.name}-state_thread", target=self.get_state)   #创建线程实时获取假人信息
-            #self.state_thread.start()
+
+            self.state_thread = Thread(name=f"{self.name}-state_thread", target=self.get_state)   #创建线程实时获取假人信息
+            self.state_thread.start()
+
             self.get_command_thread = Thread(name=f"{self.name}-get_command_thread", target=self.get_command)    #创建线程接收主进程命令
             self.get_command_thread.start()
 
-            while self.result.poll() == None and not self.force_close:
+            while self.result.poll() == None and not self.force_close:      #循环
                 time.sleep(0.5) 
 
             if self.allow_restart:
@@ -110,35 +115,41 @@ class MCC_Process(Process):
                 if self.result.stderr:
                     self.result.stderr.close()
 
+            self.close_thread = True    #关闭各个子线程
             self.input_thread.join()
             self.listening_thread.join()
-            #self.state_thread.join()
+            self.state_thread.join()
             self.get_command_thread.join()
             print(f"[DEBUG:{FILE_NAME}]子进程{self.name}（{self.pid}）已终止，父进程为（{self.ppid}）,退出状态码{self.result.poll()}")
             self.window_print("[MCCGUI] 进程已成功关闭!")
+
+            self.result.wait()
+            set_toml.clear_password(self.ini_path)      #进程关闭后清除密码（MCC关闭前会重新写入一次配置文件）
     
 
     def input_text(self):
         '''向MCC输入内容'''
         print(f"[DEBUG:{FILE_NAME}]子线程{self.input_thread.name}（{self.input_thread.ident}）已就绪，准备向MCC输入内容")
-        while self.result.poll() == None:               #进程执行时循环
+
+        while self.result.poll() == None and not self.close_thread:               #进程执行时循环
             if not self.in_queue.empty():               #接受队列的命令
                 send_text = self.in_queue.get(False)
                 print(f"[DEBUG:{FILE_NAME}]子进程{self.name}（{self.pid}）接收到命令\"{send_text}\"")
                 self.result.stdin.write(send_text + "\n")
                 self.result.stdin.flush()
-                
+           
+        print(f"[DEBUG:{FILE_NAME}]子线程{self.input_thread.name}（{self.input_thread.ident}）已关闭")
 
     def listening(self):
         '''监听子进程输出'''
         print(f"[DEBUG:{FILE_NAME}]子线程{self.listening_thread.name}（{self.listening_thread.ident}）已就绪，开始监听MCC进程的输出")
 
-        while self.result.poll() == None:
+        while self.result.poll() == None and not self.close_thread:
             for text in self.result.stdout: #获取MCC输出
                 allow_output = True
                 ansi_text = text.strip()    
                 out_text = re.sub(r'\x1b\[[0-9;]*m', '', ansi_text)
-                health_match = re.match(r"^\[MCC\] Health: (\d+\.?\d*), Saturation: (\d+\.?\d+), Level: (\d+\.?\d*), TotalExperience: (\d+\.?\d*)", out_text)
+                health_match = re.match(r"^\[MCC\] Health: (\d+\.?\d*), Saturation: (\d+\.?\d*), Level: (\d+\.?\d*), TotalExperience: (\d+\.?\d*)", out_text)
                 if health_match:
                     allow_output = False
 
@@ -198,26 +209,32 @@ class MCC_Process(Process):
 
                 if allow_output:
                     self.out_queue.put(ansi_text, False)
+
+        print(f"[DEBUG:{FILE_NAME}]子线程{self.listening_thread.name}（{self.listening_thread.ident}）已关闭")
     
     def get_state(self):
         print(f"[DEBUG:{FILE_NAME}]子线程{self.state_thread.name}（{self.state_thread.ident}）已就绪，获取假人{self.name}状态")
 
-        while self.result.poll() == None:
+        while self.result.poll() == None and not self.close_thread:
             if self.connect:
                 self.result.stdin.write("/health" + "\n")
                 self.result.stdin.flush()
             time.sleep(1)
+
+        print(f"[DEBUG:{FILE_NAME}]子线程{self.state_thread.name}（{self.state_thread.ident}）已关闭")
     
     def get_command(self):
         '''接收主进程的命令'''
         print(f"[DEBUG:{FILE_NAME}]子线程{self.get_command_thread.name}（{self.get_command_thread.ident}）已就绪，开始接收主进程（{self.ppid}）的命令")
         
-        while True:
+        while True and not self.close_thread:
             if not self.get_command_queue.empty():
                 command = self.get_command_queue.get(False)
                 if command == "close_mcc":
                     print(f"[DEBUG:{FILE_NAME}]子进程（{self.pid}）接收到来自主进程的信号“close_mcc”,即将强制关闭MCC进程")
                     self.close_MCC()
+
+        print(f"[DEBUG:{FILE_NAME}]子线程{self.get_command_thread.name}（{self.get_command_thread.ident}）已关闭")
 
     def close_MCC(self):
         '''强制关闭子进程和MCC'''

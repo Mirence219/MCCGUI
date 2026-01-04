@@ -1,3 +1,4 @@
+from nt import access
 from ntpath import join
 import os.path
 from re import M, sub
@@ -19,19 +20,28 @@ from __version__ import __version__, MangoCraft
 from utils import *
 from display_text import display_text
 import utils
+from encryptor import encrypt
 
 #代码文件名
 FILE_NAME = os.path.basename(__file__)
+
+#MCC路径
 MCC_PATH = os.path.join("bin", "MinecraftClient.exe")
+
+#主窗口标题
+MAIN_WINDOW_TITLE = f"MCC GUI 可交互式工具 v{__version__}{" 芒果方块粉丝服定制版" if MangoCraft else ""}"
+
+#用户表字段列表（不包括id）
 USER_DATA_COLUMNS = list(user_data.columns())
-USER_DATA_COLUMNS.pop(0)                #去掉id字段的字段名的列表
+USER_DATA_COLUMNS.pop(0)                
+
 
 class MCC_GUI():
     '''主窗口类'''
     def __init__(self):
         global SCREEN_WIDTH,SCREEN_HEIGHT #窗口
         self.window=Tk()
-        self.window.title(f"MCC GUI 可交互式工具 v{__version__}{" 芒果方块粉丝服定制版" if MangoCraft else ""}")
+        self.window.title(MAIN_WINDOW_TITLE)
         self.window.iconbitmap("bin/AppIcon.ico")
         self.window.protocol("WM_DELETE_WINDOW", self.close)    #关闭窗口后强制关闭主进程
         self.WIDTH=800
@@ -100,7 +110,7 @@ class MCC_GUI():
             creat_user_file(path)
     
     def close(self):
-        print(f"用户关闭主窗口，主进程以及所有子进程都将将强制关闭！")
+        print(f"[DEBUG:{FILE_NAME}]用户关闭主窗口，主进程以及所有子进程都将将强制关闭！")
         self.window.destroy()
         for account in self.accounts:
             if account.exe != None:
@@ -268,7 +278,7 @@ class AddAccount:
         account_type=self.account_type_single_ver.get()             #读取输入同时验证是否留空
 
         if account_type == "yggdrasil":
-           password = self.password_ent.get()
+           password = encrypt(self.password_ent.get())
            login_server_ip = self.login_server_ip_ent.get()
            login_server_port = self.login_server_port_ent.get()
            role_name = self.role_name_ent.get()
@@ -281,7 +291,7 @@ class AddAccount:
             self.warning.config(text="认证服务器IP不能为空！")
         elif not account:
             self.warning.config(text="账号不能为空！")
-        elif account_type=="yggdrasil" and not password:
+        elif account_type=="yggdrasil" and not password and self.__class__.__name__ == "AddAccount":
             self.warning.config(text="密码不能为空！")
         elif not game_server_ip:
             self.warning.config(text="游戏服务器IP不能为空！")
@@ -356,6 +366,8 @@ class EditAccount(AddAccount):
 
     def run(self, new_user_data_dic):
         '''提交修改账户（重写）'''
+        if not new_user_data_dic["password"]:   #不输入密码表示不修改密码
+            new_user_data_dic.pop("password")
         user_data.update(self.id, new_user_data_dic)
 
 class AccountFrame:
@@ -497,7 +509,6 @@ class AccountFrame:
         self.working = False
         self.window_print("[MCCGUI] 正在退出。。。", self.log)
         self.close_handler()
-        set_toml.clear_password()
         if self.control_window != None and self.control_window.is_alive():
             self.control_window.start_button.config(text="启动")
             self.control_window.reco_button.config(state=DISABLED)
@@ -506,8 +517,8 @@ class AccountFrame:
 
     def delete(self):
         if not self.working:
-            user_data.delete(self.id)
             utils.delete_user_file(self.path_dic["dir_path"])
+            user_data.delete(self.id)
             self.master.update_account()
         else:
             print(f"[DEBUG:{FILE_NAME}]进程工作中无法删除！")
@@ -720,7 +731,7 @@ class ControlWindow:
         self.io_frame.pack(side="left", padx=5)
         self.control_frame = LabelFrame(self.window, text="控制功能", labelanchor="n") #控制功能框架
         self.control_frame.pack(anchor=NE, fill=BOTH, padx=(0,3), pady=3)
-        self.bot_state_frame = LabelFrame(self.window, text="假人状态", labelanchor="n") #假人状态框架
+        self.bot_state_frame = LabelFrame(self.window, text="账户状态", labelanchor="n") #假人状态框架
         self.bot_state_frame.pack(anchor=SE, fill=BOTH, padx=(0,3), pady=3)
 
     def label(self):
@@ -796,7 +807,7 @@ class ControlWindow:
         if event:
             print(f"[DEBUG:{FILE_NAME}]Enter键按下")
         if text and self.submaster.working:
-            send_text = text
+            send_text = "/send " + text
             self.submaster.cache_message.append(text)
             self.cache_message_index = 0
             self.in_queue.put(send_text, False)
@@ -880,6 +891,7 @@ class OAuth20Window:
 
         self.queue = queue
         self.master = master
+        self.log_path = master.log_path
 
         self.spawn()
 
@@ -889,40 +901,51 @@ class OAuth20Window:
     
     def init_lable(self):
         '''初始化组件'''
+        self.frame()
         self.ent()
         self.lable()
         self.button()
 
     def display(self):
         '''显示组件'''
+        self.frame1.pack()
+        self.frame2.pack()
         self.text_lable.pack()
         self.code_ent.pack()
-        self.send_button.pack()
+        self.send_button.pack(expand=True)
         self.cancel_button.pack(expand=True)
+
+    def frame(self):
+        '''框架'''
+        self.frame1 = Frame(self.window)
+        self.frame2 = Frame(self.window)
 
     def ent(self):
         '''文本框'''
-        self.code_ent = Entry(self.window)
+        self.code_ent = Entry(self.frame1)
 
     def lable(self):
         '''普通组件'''
-        self.text_lable = Label(self.window, text="请输入在浏览器登录正版账户后\n由MCC官网提供的口令码：")
+        self.text_lable = Label(self.frame1, text="请输入在浏览器登录正版账户后\n由MCC官网提供的口令码：")
 
     def button(self):
         '''按钮'''
-        self.send_button = Button(self.window, text="确认", command=self.send_code)
-        self.cancel_button = Button(self.window, text="取消", command=self.cancel)
+        self.send_button = Button(self.frame2, text="确认", command=self.send_code)
+        self.cancel_button = Button(self.frame2, text="取消", command=self.cancel)
 
     def send_code(self):
         '''发送口令'''
         code = self.code_ent.get()
         if code:
+            self.master.submaster.window_print("[MCCGUI]正在校验口令。。。", self.master.submaster.log)
             self.queue.put(code, False)
             self.window.destroy()
 
     def cancel(self):
+        self.master.submaster.window_print("[MCCGUI]用户取消输入，进程即将关闭", self.master.submaster.log)
         self.window.destroy()
-        self.master.submaster.quit()
+        self.master.submaster.stop()
+        
         
 
 
