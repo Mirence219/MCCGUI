@@ -5,6 +5,7 @@
 
 
 #自定义忽略内容
+config/fernet_key
 config/app_data/
 config/data.csv
 config/data_0.7.csv
