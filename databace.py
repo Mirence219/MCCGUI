@@ -226,7 +226,7 @@ class AdvancedData(Data):
 
     #表列标题
     TABLE_COLUMNS = [
-        "enable_sentry INTEGER CHECK (enable_sentry IN (0, 1))",                              # 微软账户登录方式：0=mcc, 1=browser
+        "enable_sentry INTEGER CHECK (enable_sentry IN (0, 1))",                              # 将此项设置为 false（假），即可选择退出 / 禁用 Sentry 错误日志记录功能。
         "language TEXT",                                                                      # 使用的语言包
         "load_mcc_translation INTEGER CHECK (load_mcc_translation IN (0, 1))",                # 是否加载MCC翻译（0=禁用，1=启用）
         "console_title TEXT",                                                                 # MCC窗口标题（通常用不上）
