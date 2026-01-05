@@ -2,12 +2,12 @@
 
 - 补丁文件：mcc_modifications.patch
 - 基于的MCC原始版本：Commit ID `f785f50`（MCC官方仓库的该提交）
-- MCC官方仓库地址：https://github.com/MCCTeam/Minecraft-Console-Client
+- MCC官方仓库地址： https://github.com/MCCTeam/Minecraft-Console-Client
 - 应用方法：      
   1. 从MCC官方仓库克隆代码，切换到Commit `f785f50`：
   
 	  `git clone https://github.com/MCCTeam/Minecraft-Console-Client`
-  
+
       `cd Minecraft-Console-Client`
   
       `git checkout f785f50`
