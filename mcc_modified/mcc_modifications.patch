@@ -1,0 +1,819 @@
+From 5061f14135786694b52bb09e3cb2baf288d8a3ff Mon Sep 17 00:00:00 2001
+From: =?utf-8?q?=E9=BA=A6=E4=BB=81=E4=B8=9D?= <1211012802@qq.com>
+Date: Mon, 5 Jan 2026 15:08:50 +0800
+Subject: [PATCH] =?utf-8?q?=E9=80=82=E9=85=8DMirence=E7=9A=84MCCGUI?=
+ =?utf-8?q?=E5=AF=B9MCC=E6=BA=90=E4=BB=A3=E7=A0=81=E8=BF=9B=E8=A1=8C?=
+ =?utf-8?q?=E4=BA=86=E9=83=A8=E5=88=86=E4=BF=AE=E6=94=B9?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+---
+ MinecraftClient.sln                           | 18 +++--
+ MinecraftClient/MinecraftClient.csproj        | 14 ++--
+ MinecraftClient/Protocol/ProtocolHandler.cs   | 24 ++++++-
+ MinecraftClient/Protocol/ReplayHandler.cs     | 15 ++--
+ ...gner.cs => Translations.zh_CN.Designer.cs} |  0
+ MinecraftClient/Settings.cs                   | 20 +++++-
+ MinecraftClientGUI/MinecraftClientGUI.csproj  | 11 ++-
+ .../Properties/Resources.Designer.cs          | 68 ++++++++-----------
+ .../Properties/Settings.Designer.cs           | 30 ++++----
+ MinecraftClientGUI/app.config                 |  3 +
+ Setup/Product.wxs                             | 30 ++++++++
+ Setup/Setup.wixproj                           | 37 ++++++++++
+ SetupProject1/Product.wxs                     | 30 ++++++++
+ SetupProject1/SetupProject1.wixproj           | 37 ++++++++++
+ SetupProject2/Product.wxs                     | 30 ++++++++
+ SetupProject2/SetupProject2.wixproj           | 37 ++++++++++
+ SetupProject3/MinecraftClient_Setup.wixproj   | 48 +++++++++++++
+ SetupProject3/Product.wxs                     | 30 ++++++++
+ 18 files changed, 402 insertions(+), 80 deletions(-)
+ rename MinecraftClient/Resources/Translations/{Translations.Designer.cs => Translations.zh_CN.Designer.cs} (100%)
+ create mode 100644 MinecraftClientGUI/app.config
+ create mode 100644 Setup/Product.wxs
+ create mode 100644 Setup/Setup.wixproj
+ create mode 100644 SetupProject1/Product.wxs
+ create mode 100644 SetupProject1/SetupProject1.wixproj
+ create mode 100644 SetupProject2/Product.wxs
+ create mode 100644 SetupProject2/SetupProject2.wixproj
+ create mode 100644 SetupProject3/MinecraftClient_Setup.wixproj
+ create mode 100644 SetupProject3/Product.wxs
+
+diff --git a/MinecraftClient.sln b/MinecraftClient.sln
+index 8f0049d..795817a 100644
+--- a/MinecraftClient.sln
++++ b/MinecraftClient.sln
+@@ -1,7 +1,7 @@
+ ﻿
+ Microsoft Visual Studio Solution File, Format Version 12.00
+-# Visual Studio Version 17
+-VisualStudioVersion = 17.3.32901.215
++# Visual Studio Version 18
++VisualStudioVersion = 18.0.11222.15
+ MinimumVisualStudioVersion = 10.0.40219.1
+ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MinecraftClient", "MinecraftClient\MinecraftClient.csproj", "{1E2FACE4-F5CA-4323-9641-740C6A551770}"
+ EndProject
+@@ -10,24 +10,34 @@ EndProject
+ Global
+ 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+ 		Debug|Any CPU = Debug|Any CPU
++		Debug|x86 = Debug|x86
+ 		Release|Any CPU = Release|Any CPU
++		Release|x86 = Release|x86
+ 	EndGlobalSection
+ 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+ 		{1E2FACE4-F5CA-4323-9641-740C6A551770}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+ 		{1E2FACE4-F5CA-4323-9641-740C6A551770}.Debug|Any CPU.Build.0 = Debug|Any CPU
++		{1E2FACE4-F5CA-4323-9641-740C6A551770}.Debug|x86.ActiveCfg = Debug|Any CPU
++		{1E2FACE4-F5CA-4323-9641-740C6A551770}.Debug|x86.Build.0 = Debug|Any CPU
+ 		{1E2FACE4-F5CA-4323-9641-740C6A551770}.Release|Any CPU.ActiveCfg = Release|Any CPU
+ 		{1E2FACE4-F5CA-4323-9641-740C6A551770}.Release|Any CPU.Build.0 = Release|Any CPU
++		{1E2FACE4-F5CA-4323-9641-740C6A551770}.Release|x86.ActiveCfg = Release|Any CPU
++		{1E2FACE4-F5CA-4323-9641-740C6A551770}.Release|x86.Build.0 = Release|Any CPU
+ 		{93DA4D71-EFAD-4493-BE21-A105AF663660}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+ 		{93DA4D71-EFAD-4493-BE21-A105AF663660}.Debug|Any CPU.Build.0 = Debug|Any CPU
++		{93DA4D71-EFAD-4493-BE21-A105AF663660}.Debug|x86.ActiveCfg = Debug|Any CPU
++		{93DA4D71-EFAD-4493-BE21-A105AF663660}.Debug|x86.Build.0 = Debug|Any CPU
+ 		{93DA4D71-EFAD-4493-BE21-A105AF663660}.Release|Any CPU.ActiveCfg = Release|Any CPU
+ 		{93DA4D71-EFAD-4493-BE21-A105AF663660}.Release|Any CPU.Build.0 = Release|Any CPU
++		{93DA4D71-EFAD-4493-BE21-A105AF663660}.Release|x86.ActiveCfg = Release|Any CPU
++		{93DA4D71-EFAD-4493-BE21-A105AF663660}.Release|x86.Build.0 = Release|Any CPU
+ 	EndGlobalSection
+ 	GlobalSection(SolutionProperties) = preSolution
+ 		HideSolutionNode = FALSE
+ 	EndGlobalSection
+ 	GlobalSection(ExtensibilityGlobals) = postSolution
+-		RESX_ShowErrorsInErrorList = False
+-		SolutionGuid = {6DED60F4-9CF4-4DB3-8966-582B2EBE8487}
+ 		RESX_SortFileContentOnSave = False
++		SolutionGuid = {6DED60F4-9CF4-4DB3-8966-582B2EBE8487}
++		RESX_ShowErrorsInErrorList = False
+ 	EndGlobalSection
+ EndGlobal
+diff --git a/MinecraftClient/MinecraftClient.csproj b/MinecraftClient/MinecraftClient.csproj
+index 7047001..c1155cd 100644
+--- a/MinecraftClient/MinecraftClient.csproj
++++ b/MinecraftClient/MinecraftClient.csproj
+@@ -1,5 +1,8 @@
+-<Project Sdk="Microsoft.NET.Sdk">
++﻿<Project Sdk="Microsoft.NET.Sdk">
+   <PropertyGroup>
++    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
++    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
++    <PlatformTarget>x64</PlatformTarget>
+     <TargetFramework>net7.0</TargetFramework>
+     <OutputType>Exe</OutputType>
+     <PublishUrl>publish\</PublishUrl>
+@@ -91,11 +94,6 @@
+       <AutoGen>True</AutoGen>
+       <DependentUpon>MinecraftAssets.resx</DependentUpon>
+     </Compile>
+-    <Compile Update="Resources\Translations\Translations.Designer.cs">
+-      <DesignTime>True</DesignTime>
+-      <AutoGen>True</AutoGen>
+-      <DependentUpon>Translations.resx</DependentUpon>
+-    </Compile>
+   </ItemGroup>
+   <ItemGroup>
+     <EmbeddedResource Update="Resources\AsciiArt\AsciiArt.resx">
+@@ -113,9 +111,9 @@
+       <LastGenOutput>MinecraftAssets.Designer.cs</LastGenOutput>
+       <CustomToolNamespace>MinecraftClient</CustomToolNamespace>
+     </EmbeddedResource>
+-    <EmbeddedResource Update="Resources\Translations\Translations.resx">
++    <EmbeddedResource Update="Resources\Translations\Translations.zh_CN.resx">
+       <Generator>ResXFileCodeGenerator</Generator>
+-      <LastGenOutput>Translations.Designer.cs</LastGenOutput>
++      <LastGenOutput>Translations.zh_CN.Designer.cs</LastGenOutput>
+       <CustomToolNamespace>MinecraftClient</CustomToolNamespace>
+     </EmbeddedResource>
+   </ItemGroup>
+diff --git a/MinecraftClient/Protocol/ProtocolHandler.cs b/MinecraftClient/Protocol/ProtocolHandler.cs
+index cbf1b1c..a75655f 100644
+--- a/MinecraftClient/Protocol/ProtocolHandler.cs
++++ b/MinecraftClient/Protocol/ProtocolHandler.cs
+@@ -1,4 +1,5 @@
+ ﻿using System;
++using System.IO;
+ using System.Collections.Generic;
+ using System.Data.Odbc;
+ using System.Globalization;
+@@ -638,7 +639,13 @@ namespace MinecraftClient.Protocol
+                                 ConsoleIO.WriteLine(Translations.mcc_avaliable_profiles + availableProfiles);
+ 
+                                 ConsoleIO.WriteLine(Translations.mcc_select_profile);
+-                                string selectedProfileName = ConsoleIO.ReadLine();
++                                InternalConfig.ProfileName = Config.Main.General.ProfileName;
++                                string selectedProfileName = InternalConfig.ProfileName;
++                                //Console.WriteLine("角色选择“{0}”", selectedProfileName);
++                                if (InternalConfig.ProfileName == string.Empty)
++                                { 
++                                    selectedProfileName = Console.In.ReadLine();
++                                }
+                                 ConsoleIO.WriteLine(Translations.mcc_selected_profile + " " + selectedProfileName);
+                                 Json.JSONData? selectedProfile = null;
+                                 foreach (Json.JSONData profile in loginResponse.Properties["availableProfiles"]
+@@ -766,7 +773,7 @@ namespace MinecraftClient.Protocol
+             ConsoleIO.WriteLine("\n" + Microsoft.SignInUrl + "\n");
+ 
+             ConsoleIO.WriteLine(Translations.mcc_browser_login_code);
+-            string code = ConsoleIO.ReadLine();
++            string code = Console.In.ReadLine();
+             ConsoleIO.WriteLine(string.Format(Translations.mcc_connecting, "Microsoft"));
+ 
+             var msaResponse = Microsoft.RequestAccessToken(code);
+@@ -1255,5 +1262,18 @@ namespace MinecraftClient.Protocol
+             dateTime = dateTime.AddSeconds(unixTimeStamp).ToLocalTime();
+             return dateTime;
+         }
++        public static string GetLine(string filePath, int lineNumber) //返回ProfileName项双引号内的内容
++        {
++            string text = File.ReadLines(filePath).ElementAt(lineNumber);
++            int startQuote = text.IndexOf('"') + 1; 
++            int endQuote = text.LastIndexOf('"');   
++
++            if (startQuote > 0 && endQuote > startQuote)
++            {
++                return text.Substring(startQuote, endQuote - startQuote); 
++            }
++            return string.Empty; // 
++        }
++
+     }
+ }
+\ No newline at end of file
+diff --git a/MinecraftClient/Protocol/ReplayHandler.cs b/MinecraftClient/Protocol/ReplayHandler.cs
+index 75184e2..7cc9845 100644
+--- a/MinecraftClient/Protocol/ReplayHandler.cs
++++ b/MinecraftClient/Protocol/ReplayHandler.cs
+@@ -1,11 +1,12 @@
+-﻿using System;
+-using System.Collections.Generic;
+-using System.IO;
+-using System.Linq;
+-using Ionic.Zip;
++﻿using Ionic.Zip;
+ using MinecraftClient.Mapping;
+ using MinecraftClient.Protocol.Handlers;
+ using MinecraftClient.Protocol.Handlers.PacketPalettes;
++using System;
++using System.Collections.Generic;
++using System.IO;
++using System.Linq;
++using System.Net;
+ 
+ namespace MinecraftClient.Protocol
+ {
+@@ -239,8 +240,8 @@ namespace MinecraftClient.Protocol
+             // format: timestamp + packetLength + RawPacket
+             List<byte> line = new();
+             int nowTime = Convert.ToInt32((lastPacketTime - recordStartTime).TotalMilliseconds);
+-            line.AddRange(BitConverter.GetBytes((Int32)nowTime).Reverse().ToArray());
+-            line.AddRange(BitConverter.GetBytes((Int32)rawPacket.Count).Reverse().ToArray());
++            line.AddRange(BitConverter.GetBytes(IPAddress.HostToNetworkOrder((Int32)nowTime)));
++            line.AddRange(BitConverter.GetBytes(IPAddress.HostToNetworkOrder((Int32)rawPacket.Count)));
+             line.AddRange(rawPacket.ToArray());
+             // Write out to the file
+             recordStream!.Write(line.ToArray());
+diff --git a/MinecraftClient/Resources/Translations/Translations.Designer.cs b/MinecraftClient/Resources/Translations/Translations.zh_CN.Designer.cs
+similarity index 100%
+rename from MinecraftClient/Resources/Translations/Translations.Designer.cs
+rename to MinecraftClient/Resources/Translations/Translations.zh_CN.Designer.cs
+diff --git a/MinecraftClient/Settings.cs b/MinecraftClient/Settings.cs
+index 684e5a9..2df34c1 100644
+--- a/MinecraftClient/Settings.cs
++++ b/MinecraftClient/Settings.cs
+@@ -53,6 +53,8 @@ namespace MinecraftClient
+ 
+             public static string MinecraftVersion = string.Empty;
+ 
++            public static string ProfileName = string.Empty;
++
+             public static bool InteractiveMode = true;
+ 
+             public static bool GravityEnabled = true;
+@@ -492,11 +494,14 @@ namespace MinecraftClient
+                     [TomlInlineComment("$Main.General.server_info$")]
+                     public LoginType AccountType = LoginType.microsoft;
+ 
++                    [TomlInlineComment("$Main.General.profilename$")]
++                    public string ProfileName = new(string.Empty);
++
+                     [TomlInlineComment("$Main.General.method$")]
+                     public LoginMethod Method = LoginMethod.mcc;
+                     [TomlInlineComment("$Main.General.AuthlibServer$")]
+                     public AuthlibServer AuthServer = new(string.Empty);
+-                  
++
+ 
+                     public enum LoginType { mojang, microsoft,yggdrasil };
+ 
+@@ -654,6 +659,18 @@ namespace MinecraftClient
+                     public enum ForgeConfigType { no, auto, force };
+                 }
+ 
++
++                /*public struct ProfileNameInfoConfig
++                {
++                    public string Profile = string.Empty;
++
++                    public ProfileNameInfoConfig(string profile) 
++                    { 
++                        Profile = profile; 
++                    }
++                }*/
++
++
+                 public struct AccountInfoConfig
+                 {
+                     public string Login = string.Empty, Password = string.Empty;
+@@ -1110,6 +1127,7 @@ namespace MinecraftClient
+                                     case "login": result.Append(InternalConfig.Account.Login); break;
+                                     case "serverip": result.Append(InternalConfig.ServerIP); break;
+                                     case "serverport": result.Append(InternalConfig.ServerPort); break;
++                                    case "profilename": result.Append(InternalConfig.ProfileName);break;
+                                     case "datetime":
+                                         DateTime time = DateTime.Now;
+                                         result.Append(String.Format("{0}-{1}-{2} {3}:{4}:{5}",
+diff --git a/MinecraftClientGUI/MinecraftClientGUI.csproj b/MinecraftClientGUI/MinecraftClientGUI.csproj
+index ce8642c..962dc21 100644
+--- a/MinecraftClientGUI/MinecraftClientGUI.csproj
++++ b/MinecraftClientGUI/MinecraftClientGUI.csproj
+@@ -1,5 +1,5 @@
+ ﻿<?xml version="1.0" encoding="utf-8"?>
+-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
++<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+   <PropertyGroup>
+     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+@@ -10,8 +10,9 @@
+     <AppDesignerFolder>Properties</AppDesignerFolder>
+     <RootNamespace>MinecraftClientGUI</RootNamespace>
+     <AssemblyName>MinecraftClientGUI</AssemblyName>
+-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
++    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
++    <TargetFrameworkProfile>
++    </TargetFrameworkProfile>
+     <FileAlignment>512</FileAlignment>
+   </PropertyGroup>
+   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+@@ -23,6 +24,7 @@
+     <DefineConstants>DEBUG;TRACE</DefineConstants>
+     <ErrorReport>prompt</ErrorReport>
+     <WarningLevel>4</WarningLevel>
++    <Prefer32Bit>false</Prefer32Bit>
+   </PropertyGroup>
+   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+     <PlatformTarget>x86</PlatformTarget>
+@@ -32,6 +34,7 @@
+     <DefineConstants>TRACE</DefineConstants>
+     <ErrorReport>prompt</ErrorReport>
+     <WarningLevel>4</WarningLevel>
++    <Prefer32Bit>false</Prefer32Bit>
+   </PropertyGroup>
+   <PropertyGroup>
+     <ApplicationIcon>AppIcon.ico</ApplicationIcon>
+@@ -69,7 +72,9 @@
+     <Compile Include="Properties\Resources.Designer.cs">
+       <AutoGen>True</AutoGen>
+       <DependentUpon>Resources.resx</DependentUpon>
++      <DesignTime>True</DesignTime>
+     </Compile>
++    <None Include="app.config" />
+     <None Include="Properties\Settings.settings">
+       <Generator>SettingsSingleFileGenerator</Generator>
+       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+diff --git a/MinecraftClientGUI/Properties/Resources.Designer.cs b/MinecraftClientGUI/Properties/Resources.Designer.cs
+index 9b33fcd..d30d0e8 100644
+--- a/MinecraftClientGUI/Properties/Resources.Designer.cs
++++ b/MinecraftClientGUI/Properties/Resources.Designer.cs
+@@ -1,69 +1,61 @@
+ ﻿//------------------------------------------------------------------------------
+ // <auto-generated>
+-//     This code was generated by a tool.
+-//     Runtime Version:4.0.30319.18046
++//     此代码由工具生成。
++//     运行时版本:4.0.30319.42000
+ //
+-//     Changes to this file may cause incorrect behavior and will be lost if
+-//     the code is regenerated.
++//     对此文件的更改可能会导致不正确的行为，并且如果
++//     重新生成代码，这些更改将会丢失。
+ // </auto-generated>
+ //------------------------------------------------------------------------------
+ 
+-namespace MinecraftClientGUI.Properties
+-{
+-
+-
++namespace MinecraftClientGUI.Properties {
++    using System;
++    
++    
+     /// <summary>
+-    ///   A strongly-typed resource class, for looking up localized strings, etc.
++    ///   一个强类型的资源类，用于查找本地化的字符串等。
+     /// </summary>
+-    // This class was auto-generated by the StronglyTypedResourceBuilder
+-    // class via a tool like ResGen or Visual Studio.
+-    // To add or remove a member, edit your .ResX file then rerun ResGen
+-    // with the /str option, or rebuild your VS project.
+-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
++    // 此类是由 StronglyTypedResourceBuilder
++    // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
++    // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
++    // (以 /str 作为命令选项)，或重新生成 VS 项目。
++    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+-    internal class Resources
+-    {
+-
++    internal class Resources {
++        
+         private static global::System.Resources.ResourceManager resourceMan;
+-
++        
+         private static global::System.Globalization.CultureInfo resourceCulture;
+-
++        
+         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
+-        internal Resources()
+-        {
++        internal Resources() {
+         }
+-
++        
+         /// <summary>
+-        ///   Returns the cached ResourceManager instance used by this class.
++        ///   返回此类使用的缓存的 ResourceManager 实例。
+         /// </summary>
+         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
+-        internal static global::System.Resources.ResourceManager ResourceManager
+-        {
+-            get
+-            {
+-                if ((resourceMan == null))
+-                {
++        internal static global::System.Resources.ResourceManager ResourceManager {
++            get {
++                if (object.ReferenceEquals(resourceMan, null)) {
+                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("MinecraftClientGUI.Properties.Resources", typeof(Resources).Assembly);
+                     resourceMan = temp;
+                 }
+                 return resourceMan;
+             }
+         }
+-
++        
+         /// <summary>
+-        ///   Overrides the current thread's CurrentUICulture property for all
+-        ///   resource lookups using this strongly typed resource class.
++        ///   重写当前线程的 CurrentUICulture 属性，对
++        ///   使用此强类型资源类的所有资源查找执行重写。
+         /// </summary>
+         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
+-        internal static global::System.Globalization.CultureInfo Culture
+-        {
+-            get
+-            {
++        internal static global::System.Globalization.CultureInfo Culture {
++            get {
+                 return resourceCulture;
+             }
+-            set
+-            {
++            set {
+                 resourceCulture = value;
+             }
+         }
+diff --git a/MinecraftClientGUI/Properties/Settings.Designer.cs b/MinecraftClientGUI/Properties/Settings.Designer.cs
+index 52f889e..c297a92 100644
+--- a/MinecraftClientGUI/Properties/Settings.Designer.cs
++++ b/MinecraftClientGUI/Properties/Settings.Designer.cs
+@@ -1,28 +1,24 @@
+ ﻿//------------------------------------------------------------------------------
+ // <auto-generated>
+-//     This code was generated by a tool.
+-//     Runtime Version:4.0.30319.18046
++//     此代码由工具生成。
++//     运行时版本:4.0.30319.42000
+ //
+-//     Changes to this file may cause incorrect behavior and will be lost if
+-//     the code is regenerated.
++//     对此文件的更改可能会导致不正确的行为，并且如果
++//     重新生成代码，这些更改将会丢失。
+ // </auto-generated>
+ //------------------------------------------------------------------------------
+ 
+-namespace MinecraftClientGUI.Properties
+-{
+-
+-
++namespace MinecraftClientGUI.Properties {
++    
++    
+     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "10.0.0.0")]
+-    internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase
+-    {
+-
++    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.14.0.0")]
++    internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
++        
+         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
+-
+-        public static Settings Default
+-        {
+-            get
+-            {
++        
++        public static Settings Default {
++            get {
+                 return defaultInstance;
+             }
+         }
+diff --git a/MinecraftClientGUI/app.config b/MinecraftClientGUI/app.config
+new file mode 100644
+index 0000000..3e0e37c
+--- /dev/null
++++ b/MinecraftClientGUI/app.config
+@@ -0,0 +1,3 @@
++<?xml version="1.0" encoding="utf-8"?>
++<configuration>
++<startup><supportedRuntime version="v4.0" sku=".NETFramework,Version=v4.8"/></startup></configuration>
+diff --git a/Setup/Product.wxs b/Setup/Product.wxs
+new file mode 100644
+index 0000000..a8aa108
+--- /dev/null
++++ b/Setup/Product.wxs
+@@ -0,0 +1,30 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
++	<Product Id="*" Name="Setup" Language="1033" Version="1.0.0.0" Manufacturer="" UpgradeCode="9dabe699-99ab-48f7-8721-1fab7f688cc2">
++		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
++
++		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
++		<MediaTemplate />
++
++		<Feature Id="ProductFeature" Title="Setup" Level="1">
++			<ComponentGroupRef Id="ProductComponents" />
++		</Feature>
++	</Product>
++
++	<Fragment>
++		<Directory Id="TARGETDIR" Name="SourceDir">
++			<Directory Id="ProgramFilesFolder">
++				<Directory Id="INSTALLFOLDER" Name="Setup" />
++			</Directory>
++		</Directory>
++	</Fragment>
++
++	<Fragment>
++		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
++			<!-- TODO: Remove the comments around this Component element and the ComponentRef below in order to add resources to this installer. -->
++			<!-- <Component Id="ProductComponent"> -->
++				<!-- TODO: Insert files, registry keys, and other resources here. -->
++			<!-- </Component> -->
++		</ComponentGroup>
++	</Fragment>
++</Wix>
+diff --git a/Setup/Setup.wixproj b/Setup/Setup.wixproj
+new file mode 100644
+index 0000000..306575d
+--- /dev/null
++++ b/Setup/Setup.wixproj
+@@ -0,0 +1,37 @@
++<?xml version="1.0" encoding="utf-8"?>
++<Project ToolsVersion="4.0" DefaultTargets="Build" InitialTargets="EnsureWixToolsetInstalled" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
++  <PropertyGroup>
++    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
++    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
++    <ProductVersion>3.10</ProductVersion>
++    <ProjectGuid>ebf8a7ca-e281-4354-b75c-34357e10cdeb</ProjectGuid>
++    <SchemaVersion>2.0</SchemaVersion>
++    <OutputName>Setup</OutputName>
++    <OutputType>Package</OutputType>
++  </PropertyGroup>
++  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
++    <OutputPath>bin\$(Configuration)\</OutputPath>
++    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
++    <DefineConstants>Debug</DefineConstants>
++  </PropertyGroup>
++  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
++    <OutputPath>bin\$(Configuration)\</OutputPath>
++    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
++  </PropertyGroup>
++  <ItemGroup>
++    <Compile Include="Product.wxs" />
++  </ItemGroup>
++  <Import Project="$(WixTargetsPath)" Condition=" '$(WixTargetsPath)' != '' " />
++  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets" Condition=" '$(WixTargetsPath)' == '' AND Exists('$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets') " />
++  <Target Name="EnsureWixToolsetInstalled" Condition=" '$(WixTargetsImported)' != 'true' ">
++    <Error Text="The WiX Toolset v3.11 build tools must be installed to build this project. To download the WiX Toolset, see https://wixtoolset.org/releases/v3.11/stable" />
++  </Target>
++  <!--
++	To modify your build process, add your task inside one of the targets below and uncomment it.
++	Other similar extension points exist, see Wix.targets.
++	<Target Name="BeforeBuild">
++	</Target>
++	<Target Name="AfterBuild">
++	</Target>
++	-->
++</Project>
+\ No newline at end of file
+diff --git a/SetupProject1/Product.wxs b/SetupProject1/Product.wxs
+new file mode 100644
+index 0000000..713db8e
+--- /dev/null
++++ b/SetupProject1/Product.wxs
+@@ -0,0 +1,30 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
++	<Product Id="*" Name="SetupProject1" Language="1033" Version="1.0.0.0" Manufacturer="" UpgradeCode="18a84044-45f9-473c-b5e5-c01aa4e8d587">
++		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
++
++		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
++		<MediaTemplate />
++
++		<Feature Id="ProductFeature" Title="SetupProject1" Level="1">
++			<ComponentGroupRef Id="ProductComponents" />
++		</Feature>
++	</Product>
++
++	<Fragment>
++		<Directory Id="TARGETDIR" Name="SourceDir">
++			<Directory Id="ProgramFilesFolder">
++				<Directory Id="INSTALLFOLDER" Name="SetupProject1" />
++			</Directory>
++		</Directory>
++	</Fragment>
++
++	<Fragment>
++		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
++			<!-- TODO: Remove the comments around this Component element and the ComponentRef below in order to add resources to this installer. -->
++			<!-- <Component Id="ProductComponent"> -->
++				<!-- TODO: Insert files, registry keys, and other resources here. -->
++			<!-- </Component> -->
++		</ComponentGroup>
++	</Fragment>
++</Wix>
+diff --git a/SetupProject1/SetupProject1.wixproj b/SetupProject1/SetupProject1.wixproj
+new file mode 100644
+index 0000000..a902c30
+--- /dev/null
++++ b/SetupProject1/SetupProject1.wixproj
+@@ -0,0 +1,37 @@
++<?xml version="1.0" encoding="utf-8"?>
++<Project ToolsVersion="4.0" DefaultTargets="Build" InitialTargets="EnsureWixToolsetInstalled" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
++  <PropertyGroup>
++    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
++    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
++    <ProductVersion>3.10</ProductVersion>
++    <ProjectGuid>abbeae1e-5994-42e3-b228-ca75960624c2</ProjectGuid>
++    <SchemaVersion>2.0</SchemaVersion>
++    <OutputName>SetupProject1</OutputName>
++    <OutputType>Package</OutputType>
++  </PropertyGroup>
++  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
++    <OutputPath>bin\$(Configuration)\</OutputPath>
++    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
++    <DefineConstants>Debug</DefineConstants>
++  </PropertyGroup>
++  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
++    <OutputPath>bin\$(Configuration)\</OutputPath>
++    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
++  </PropertyGroup>
++  <ItemGroup>
++    <Compile Include="Product.wxs" />
++  </ItemGroup>
++  <Import Project="$(WixTargetsPath)" Condition=" '$(WixTargetsPath)' != '' " />
++  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets" Condition=" '$(WixTargetsPath)' == '' AND Exists('$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets') " />
++  <Target Name="EnsureWixToolsetInstalled" Condition=" '$(WixTargetsImported)' != 'true' ">
++    <Error Text="The WiX Toolset v3.11 build tools must be installed to build this project. To download the WiX Toolset, see https://wixtoolset.org/releases/v3.11/stable" />
++  </Target>
++  <!--
++	To modify your build process, add your task inside one of the targets below and uncomment it.
++	Other similar extension points exist, see Wix.targets.
++	<Target Name="BeforeBuild">
++	</Target>
++	<Target Name="AfterBuild">
++	</Target>
++	-->
++</Project>
+\ No newline at end of file
+diff --git a/SetupProject2/Product.wxs b/SetupProject2/Product.wxs
+new file mode 100644
+index 0000000..3144c86
+--- /dev/null
++++ b/SetupProject2/Product.wxs
+@@ -0,0 +1,30 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
++	<Product Id="*" Name="SetupProject2" Language="1033" Version="1.0.0.0" Manufacturer="" UpgradeCode="98ea58e4-1128-44f5-9ae3-bd05153bfb41">
++		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
++
++		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
++		<MediaTemplate />
++
++		<Feature Id="ProductFeature" Title="SetupProject2" Level="1">
++			<ComponentGroupRef Id="ProductComponents" />
++		</Feature>
++	</Product>
++
++	<Fragment>
++		<Directory Id="TARGETDIR" Name="SourceDir">
++			<Directory Id="ProgramFilesFolder">
++				<Directory Id="INSTALLFOLDER" Name="SetupProject2" />
++			</Directory>
++		</Directory>
++	</Fragment>
++
++	<Fragment>
++		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
++			<!-- TODO: Remove the comments around this Component element and the ComponentRef below in order to add resources to this installer. -->
++			<!-- <Component Id="ProductComponent"> -->
++				<!-- TODO: Insert files, registry keys, and other resources here. -->
++			<!-- </Component> -->
++		</ComponentGroup>
++	</Fragment>
++</Wix>
+diff --git a/SetupProject2/SetupProject2.wixproj b/SetupProject2/SetupProject2.wixproj
+new file mode 100644
+index 0000000..ca0078a
+--- /dev/null
++++ b/SetupProject2/SetupProject2.wixproj
+@@ -0,0 +1,37 @@
++<?xml version="1.0" encoding="utf-8"?>
++<Project ToolsVersion="4.0" DefaultTargets="Build" InitialTargets="EnsureWixToolsetInstalled" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
++  <PropertyGroup>
++    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
++    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
++    <ProductVersion>3.10</ProductVersion>
++    <ProjectGuid>1dbb47bc-fb09-479f-a345-9ec8ae8f4c15</ProjectGuid>
++    <SchemaVersion>2.0</SchemaVersion>
++    <OutputName>SetupProject2</OutputName>
++    <OutputType>Package</OutputType>
++  </PropertyGroup>
++  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
++    <OutputPath>bin\$(Configuration)\</OutputPath>
++    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
++    <DefineConstants>Debug</DefineConstants>
++  </PropertyGroup>
++  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
++    <OutputPath>bin\$(Configuration)\</OutputPath>
++    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
++  </PropertyGroup>
++  <ItemGroup>
++    <Compile Include="Product.wxs" />
++  </ItemGroup>
++  <Import Project="$(WixTargetsPath)" Condition=" '$(WixTargetsPath)' != '' " />
++  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets" Condition=" '$(WixTargetsPath)' == '' AND Exists('$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets') " />
++  <Target Name="EnsureWixToolsetInstalled" Condition=" '$(WixTargetsImported)' != 'true' ">
++    <Error Text="The WiX Toolset v3.11 build tools must be installed to build this project. To download the WiX Toolset, see https://wixtoolset.org/releases/v3.11/stable" />
++  </Target>
++  <!--
++	To modify your build process, add your task inside one of the targets below and uncomment it.
++	Other similar extension points exist, see Wix.targets.
++	<Target Name="BeforeBuild">
++	</Target>
++	<Target Name="AfterBuild">
++	</Target>
++	-->
++</Project>
+\ No newline at end of file
+diff --git a/SetupProject3/MinecraftClient_Setup.wixproj b/SetupProject3/MinecraftClient_Setup.wixproj
+new file mode 100644
+index 0000000..a14536f
+--- /dev/null
++++ b/SetupProject3/MinecraftClient_Setup.wixproj
+@@ -0,0 +1,48 @@
++<?xml version="1.0" encoding="utf-8"?>
++<Project ToolsVersion="4.0" DefaultTargets="Build" InitialTargets="EnsureWixToolsetInstalled" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
++  <PropertyGroup>
++    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
++    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
++    <ProductVersion>3.10</ProductVersion>
++    <ProjectGuid>f5cec5c1-220a-46f5-8c63-28234271089f</ProjectGuid>
++    <SchemaVersion>2.0</SchemaVersion>
++    <OutputName>SetupProject3</OutputName>
++    <OutputType>Package</OutputType>
++    <Name>MinecraftClient_Setup</Name>
++  </PropertyGroup>
++  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
++    <OutputPath>bin\$(Configuration)\</OutputPath>
++    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
++    <DefineConstants>Debug</DefineConstants>
++  </PropertyGroup>
++  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
++    <OutputPath>bin\$(Configuration)\</OutputPath>
++    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
++  </PropertyGroup>
++  <ItemGroup>
++    <Compile Include="Product.wxs" />
++  </ItemGroup>
++  <ItemGroup>
++    <ProjectReference Include="..\MinecraftClient\MinecraftClient.csproj">
++      <Name>MinecraftClient</Name>
++      <Project>{1e2face4-f5ca-4323-9641-740c6a551770}</Project>
++      <Private>True</Private>
++      <DoNotHarvest>True</DoNotHarvest>
++      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
++      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
++    </ProjectReference>
++  </ItemGroup>
++  <Import Project="$(WixTargetsPath)" Condition=" '$(WixTargetsPath)' != '' " />
++  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets" Condition=" '$(WixTargetsPath)' == '' AND Exists('$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets') " />
++  <Target Name="EnsureWixToolsetInstalled" Condition=" '$(WixTargetsImported)' != 'true' ">
++    <Error Text="The WiX Toolset v3.11 build tools must be installed to build this project. To download the WiX Toolset, see https://wixtoolset.org/releases/v3.11/stable" />
++  </Target>
++  <!--
++	To modify your build process, add your task inside one of the targets below and uncomment it.
++	Other similar extension points exist, see Wix.targets.
++	<Target Name="BeforeBuild">
++	</Target>
++	<Target Name="AfterBuild">
++	</Target>
++	-->
++</Project>
+\ No newline at end of file
+diff --git a/SetupProject3/Product.wxs b/SetupProject3/Product.wxs
+new file mode 100644
+index 0000000..4e78ff9
+--- /dev/null
++++ b/SetupProject3/Product.wxs
+@@ -0,0 +1,30 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
++	<Product Id="*" Name="SetupProject3" Language="1033" Version="1.0.0.0" Manufacturer="" UpgradeCode="de8b6ebc-2da6-42d9-bdc6-eeccb9d2244e">
++		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
++
++		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
++		<MediaTemplate />
++
++		<Feature Id="ProductFeature" Title="SetupProject3" Level="1">
++			<ComponentGroupRef Id="ProductComponents" />
++		</Feature>
++	</Product>
++
++	<Fragment>
++		<Directory Id="TARGETDIR" Name="SourceDir">
++			<Directory Id="ProgramFilesFolder">
++				<Directory Id="INSTALLFOLDER" Name="SetupProject3" />
++			</Directory>
++		</Directory>
++	</Fragment>
++
++	<Fragment>
++		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
++			<!-- TODO: Remove the comments around this Component element and the ComponentRef below in order to add resources to this installer. -->
++			<!-- <Component Id="ProductComponent"> -->
++				<!-- TODO: Insert files, registry keys, and other resources here. -->
++			<!-- </Component> -->
++		</ComponentGroup>
++	</Fragment>
++</Wix>
+-- 
+2.51.2.windows.1
+
