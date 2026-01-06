@@ -1,21 +1,23 @@
 from nt import access
 from ntpath import join
 import os.path
+from pprint import pprint
 from re import M, sub
 import time
 from tkinter import *
-from tkinter.ttk import Notebook
+from tkinter.ttk import Notebook, Combobox
 import tkinter.scrolledtext
 import os
-from multiprocessing import Queue, freeze_support
+from multiprocessing import Queue, Value, freeze_support
 from threading import Thread
 import logging
 import sys
+from turtle import width
 from typing import List
 import ping3
 
 
-from databace import user_data
+from databace import user_data, advanced_data
 import set_toml
 import start
 from __version__ import __version__, MangoCraft
@@ -125,14 +127,13 @@ class MCC_GUI():
             account.ping_update()
             account.ping_display()
 
-
 class AddAccount:
     '''添加账户窗口类'''
     def __init__(self, master):
         self.window = Toplevel(master.window)
         self.window.title("添加账户")
         self.WIDTH = 450
-        self.HEIGHT = 300
+        self.HEIGHT = 350
         self.ENTRY_WIDTH = 30
         self.PORT_ENTRY_WIDTH = 5
         self.window.geometry(f"{self.WIDTH}x{self.HEIGHT}")
@@ -150,11 +151,11 @@ class AddAccount:
         self._init_note()           #选项卡
         self._init_normal_widget()  #常规
         #self._init_client_widget()  #客户端
-        self._init_advance_widget() #高级
+        self._init_advanced_widget() #高级
 
     def _display_widget(self):
         self._display_note()
-        self._display_advance_widget()
+        self._display_advanced_widget()
 
     def _init_normal_widget(self):
         '''初始化常规选项组件'''
@@ -182,9 +183,9 @@ class AddAccount:
     def _display_note(self):
         '''显示控件'''
         self.note.add(self.normal_note, text = "常规")
-        self.note.add(self.client_note, text = "客户端")
-        self.note.add(self.advance_note, text = "高级")
-        self.note.pack(fill=X)
+        #self.note.add(self.client_note, text = "客户端")
+        self.note.add(self.advanced_note, text = "高级")
+        self.note.pack(fill=BOTH)
 
     def _init_frame(self):
         '''框架'''
@@ -294,20 +295,44 @@ class AddAccount:
         self.note = Notebook(self.window)       #选项卡对象
         self.normal_note = Frame(self.note)     #常规选项卡框架
         self.client_note = Frame(self.note)     #客户端选项卡
-        self.advance_note = Frame(self.note)    #高级选项卡
+        self.advanced_note = Frame(self.note)    #高级选项卡
 
-    def _init_advance_widget(self):
+    def _init_advanced_widget(self):
         '''初始化高级选项（客户端和高级）'''
 
-        self.advance_canvas = Canvas(self.advance_note, highlightthickness=0)
-        self.advance_scrollbar = Scrollbar(self.advance_note, orient=VERTICAL, command=self.advance_canvas.yview)
-        self.advance_frame = Frame(self.advance_canvas)
-        self.advance_frame.bind("<Configure>", lambda e: self.advance_canvas.configure(scrollregion=self.advance_canvas.bbox("all")))
-        self.advance_canvas.create_window((0, 0), window=self.advance_frame, anchor = NW)
-        self.advance_canvas.configure(yscrollcommand=self.advance_scrollbar.set)
+        self.advanced_canvas = Canvas(self.advanced_note, highlightthickness=0, width=self.WIDTH-20)
+        self.advanced_scrollbar = Scrollbar(self.advanced_note, orient=VERTICAL, command=self.advanced_canvas.yview)
+        self.advanced_frame = Frame(self.advanced_canvas, padx=3, pady=3)
+        self.advanced_frame.bind("<Configure>", lambda e: self.advanced_canvas.configure(scrollregion=self.advanced_canvas.bbox("all")))
+        self.advanced_canvas.create_window((0, 0), window=self.advanced_frame, anchor = NW)
+        self.advanced_canvas.configure(yscrollcommand=self.advanced_scrollbar.set)
 
+        #语言包选项
+        language_opions =(
+            "af_za", "ar_sa", "ast_es", "az_az", "ba_ru", "bar", "be_by", "bg_bg",
+            "br_fr", "brb", "bs_ba", "ca_es", "cs_cz", "cy_gb", "da_dk", "de_at",
+            "de_ch", "de_de", "el_gr", "en_au", "en_ca", "en_gb", "en_nz", "en_pt",
+            "en_ud", "en_us", "enp", "enws", "eo_uy", "es_ar", "es_cl", "es_ec",
+            "es_es", "es_mx", "es_uy", "es_ve", "esan", "et_ee", "eu_es", "fa_ir",
+            "fi_fi", "fil_ph", "fo_fo", "fr_ca", "fr_fr", "fra_de", "fur_it", "fy_nl",
+            "ga_ie", "gd_gb", "gl_es", "haw_us", "he_il", "hi_in", "hr_hr", "hu_hu",
+            "hy_am", "id_id", "ig_ng", "io_en", "is_is", "isv", "it_it", "ja_jp",
+            "jbo_en", "ka_ge", "kk_kz", "kn_in", "ko_kr", "ksh", "kw_gb", "la_la",
+            "lb_lu", "li_li", "lmo", "lol_us", "lt_lt", "lv_lv", "lzh", "mk_mk",
+            "mn_mn", "ms_my", "mt_mt", "nah", "nds_de", "nl_be", "nl_nl", "nn_no",
+            "no_no", "oc_fr", "ovd", "pl_pl", "pt_br", "pt_pt", "qya_aa", "ro_ro",
+            "rpr", "ru_ru", "ry_ua", "se_no", "sk_sk", "sl_si", "so_so", "sq_al",
+            "sr_sp", "sv_se", "sxu", "szl", "ta_in", "th_th", "tl_ph", "tlh_aa",
+            "tok", "tr_tr", "tt_ru", "uk_ua", "val_es", "vec_it", "vi_vn", "yi_de",
+            "yo_ng", "zh_cn", "zh_hk", "zh_tw", "zlm_arab"
+        )
+                
 
-        self.advance_widget_dic = {}
+        self.advanced_widget_columns_count = 2       #列数
+
+        self.advanced_widget_dic = {}
+
+        self.advanced_value_dic = {}
 
         #布尔选项
         check_items = [
@@ -317,13 +342,13 @@ class AddAccount:
             ("show_xp_bar_messages", "显示经验条消息", True),
             ("show_chat_links", "解码聊天链接", True),
             ("show_inventory_layout", "显示库存布局", True),
-            ("terrain_and_movements", "地形处理和移动", False),
+            ("terrain_and_movements", "地形处理", False),
             ("move_head_while_walking", "移动时转向头部", True),
             ("temporary_fix_badpacket", "修复坏数据包", False),
             ("inventory_handling", "库存处理", False),
             ("entity_handling", "实体处理", False),
-            ("player_head_as_icon", "玩家头像作为窗口图标", True),
-            ("exit_on_failure", "错误时退出", True),
+            #("player_head_as_icon", "玩家头像作为窗口图标", True),
+            #("exit_on_failure", "错误时退出", True),
             ("cache_script", "缓存bot编译脚本", True),
             ("timestamps", "聊天消息时间戳", False),
             ("auto_respawn", "自动重生", False),
@@ -335,80 +360,91 @@ class AddAccount:
         for key, val, default in check_items:
             default_var = 1 if default else 0
             var = IntVar(value=default_var)
-            check = Checkbutton(self.advance_frame, variable=var, text=val, anchor=W)  #多选框
+            check = Checkbutton(self.advanced_frame, variable=var, text=val, anchor=W)  #多选框
 
-            self.advance_widget_dic[key] = {"type" : "check_button", "widget" : check, "var" : var}     #存入var防止退出循环后被自动回收
+            self.advanced_value_dic[key] = default_var
+            self.advanced_widget_dic[key] = {"type" : "check_button", "widget" : check, "var" : var}     #存入var防止退出循环后被自动回收
+            
 
 
         #枚举选项
         listbox_items = [
-            ("internal_cmd_char", "内部命令前缀", ('none', 'slash', 'backslash'), "slash"),  
-            ("enable_forge", "Forge支持", ('auto', 'no', 'force'), "no"),  
+            ("language", "语言包", language_opions, "zh_cn"),
+            #("internal_cmd_char", "内部命令前缀", ('none', 'slash', 'backslash'), "slash"),  
+            ("enable_forge", "Forge支持", ('auto', 'no', 'force'), "auto"),  
+            ("brand_info", "客户端标识", ('mcc', 'vanilla', 'empty'), "mcc"),
             ("session_cache", "会话缓存", ('none', 'memory', 'disk'), "disk"), 
             ("profile_key_cache", "聊天密钥缓存", ('none', 'memory', 'disk'), "disk"),  
             ("resolve_srv_records", "SRV记录解析", ('no', 'fast', 'yes'), "fast") 
         ]
 
         for key, val, options, default_value in listbox_items:
-            frame = Frame(self.advance_frame)
+            frame = Frame(self.advanced_frame, width=self.WIDTH//self.advanced_widget_columns_count)
             label = Label(frame, text=val)
-            list_box = Listbox(frame, selectmode=SINGLE, height=min(len(options), 5))
+            comb = Combobox(frame, value=options, state="readonly", width=10)
+            comb.set(default_value)
 
-            for index, option in enumerate(options):    #插入选项
-                list_box.insert(index, option)
-            default_index = options.index(default_value)
-            list_box.selection_set(default_index)
-
-            self.advance_widget_dic[key] = {"type" : "list_box", "widget" : list_box, "label" : label, "frame" : frame}
+            self.advanced_value_dic[key] = default_value
+            self.advanced_widget_dic[key] = {"type" : "combobox", "widget" : comb, "label" : label, "frame" : frame}
 
 
          #自由输入选项
         entry_items = entry_items = [
-            ("language", "语言包", "zh_cn"),
-            ("console_title", "MCC窗口标题", "%username%@%serverip% - Minecraft Console Client"),
+            #("console_title", "MCC窗口标题", "%username%@%serverip% - Minecraft Console Client"),
             ("message_cooldown", "消息发送间隔（秒）", 1.0),
             ("bot_owners", "机器人所有者", ""),
-            ("minecraft_version", "游戏版本", "auto"),
-            ("brand_info", "客户端标识", "mcc"),
+            ("minecraft_version", "游戏版本", "1.20.4" if MangoCraft else "auto"),
             ("chatbot_log_file", "Bot日志路径", ""),
             ("private_msgs_cmd_name", "远程控制命令名称", "tell"),
             ("movement_speed", "移动速度", 2),
             ("tcp_timeout", "连接超时时间（秒）", 30),
-            ("min_terminal_width", "终端最小宽度", 16),
-            ("min_terminal_height", "终端最小高度", 10)
+            #("min_terminal_width", "终端最小宽度", 16),
+            #("min_terminal_height", "终端最小高度", 10)
         ]
 
         for key, val, default_value in entry_items:
-            frame = Frame(self.advance_frame)
+            frame = Frame(self.advanced_frame, width=self.WIDTH//self.advanced_widget_columns_count)
             label = Label(frame, text=val)
-            ent = Entry(frame)
+            ent = Entry(frame, width=10)
             if default_value:
                 ent.insert(0, default_value)
 
-            self.advance_widget_dic[key] = {"type" : "entry", "widget" : ent, "label" : label, "frame" : frame}
+            self.advanced_value_dic[key] = default_value
+            self.advanced_widget_dic[key] = {"type" : "entry", "widget" : ent, "label" : label, "frame" : frame}
 
-    def _display_advance_widget(self):
+        self._bind_all_children_widget(self.advanced_canvas, "<MouseWheel>", self._mouse_wheel)      #绑定鼠标滚轮事件
+
+    def _display_advanced_widget(self):
         '''显示所有高级选项'''
-        self.advance_canvas.pack(side=LEFT, fill=BOTH, expand=True)
-        self.advance_scrollbar.pack(side=RIGHT, fill=Y)
-        #self.advance_frame.pack()
+       
+        for i in range(self.advanced_widget_columns_count):
+            self.advanced_frame.columnconfigure(i, weight=1, minsize=self.WIDTH//self.advanced_widget_columns_count)
 
-        for key in self.advance_widget_dic:
-            if self.advance_widget_dic[key]["type"] == "check_button":
-                self.advance_widget_dic[key]["widget"].pack()
+        num = 0
 
-        for key in self.advance_widget_dic:
-            if self.advance_widget_dic[key]["type"] == "list_box":
-                self.advance_widget_dic[key]["frame"].pack()
-                self.advance_widget_dic[key]["label"].pack(side=LEFT)
-                self.advance_widget_dic[key]["widget"].pack(side=RIGHT)
+        self.advanced_canvas.pack(side=LEFT, fill=BOTH)
+        self.advanced_scrollbar.pack(side=RIGHT, fill=BOTH)
 
-        for key in self.advance_widget_dic:
-            if self.advance_widget_dic[key]["type"] == "entry":
-                self.advance_widget_dic[key]["frame"].pack()
-                self.advance_widget_dic[key]["label"].pack(side=LEFT)
-                self.advance_widget_dic[key]["widget"].pack(side=RIGHT)
-                
+        for key in self.advanced_widget_dic:
+            if self.advanced_widget_dic[key]["type"] == "check_button":
+                self.advanced_widget_dic[key]["widget"].grid(row=num//self.advanced_widget_columns_count, column=num%self.advanced_widget_columns_count, sticky=W + E)
+                num += 1
+        num = num + 1 if num % 2 else num
+
+        for key in self.advanced_widget_dic:
+            if self.advanced_widget_dic[key]["type"] == "combobox":
+                self.advanced_widget_dic[key]["frame"].grid(row=num//self.advanced_widget_columns_count, column=num%self.advanced_widget_columns_count, pady=3, sticky=W + E)
+                self.advanced_widget_dic[key]["label"].grid(row=0, column=0, sticky=W, padx=3)
+                self.advanced_widget_dic[key]["widget"].grid(row=0, column=1, sticky=E, padx=3)
+                num += 1
+        num = num + 1 if num % 2 else num
+
+        for key in self.advanced_widget_dic:
+            if self.advanced_widget_dic[key]["type"] == "entry":
+                self.advanced_widget_dic[key]["frame"].grid(row=num//self.advanced_widget_columns_count, column=num%self.advanced_widget_columns_count, pady=3, sticky=W + E)
+                self.advanced_widget_dic[key]["label"].grid(row=0, column=0, stick=W, padx=3)
+                self.advanced_widget_dic[key]["widget"].grid(row=0, column=1, sticky=E, padx=3)
+                num += 1               
 
     def login(self):
         '''获取登录数据创建账户'''
@@ -453,19 +489,51 @@ class AddAccount:
                 account_type
                 ]
             new_user_data_dic = dict(zip(USER_DATA_COLUMNS, new_data_values))   #新账户数据
-            self.run(new_user_data_dic)
+
+
+            for key in self.advanced_value_dic:             #获取高级设置内容
+                if self.advanced_widget_dic[key]["type"] == "check_button":
+                    value = bool(self.advanced_widget_dic[key]["var"].get())
+                elif self.advanced_widget_dic[key]["type"] in ("entry", "combobox"):
+                    value = self.advanced_widget_dic[key]["widget"].get()
+
+                self.advanced_value_dic[key] = value
+
+            self.run(new_user_data_dic, self.advanced_value_dic)     
+
             self.master.update_account()
             self.window.destroy()
 
-    def run(self, new_user_data_dic):
+    def run(self, new_user_data_dic, new_advanced_data_dic):
         '''添加账户（继承后可以重写）'''
         user_data.add(new_user_data_dic)
+        advanced_data.add(new_advanced_data_dic)
+        
+
+    def _mouse_wheel(self, event):
+        '''处理鼠标滚轮事件（滚动条）'''
+        step = 4 #步长
+
+        if event.delta > 0:
+            self.advanced_canvas.yview_scroll(-step, UNITS)
+            #print(f"[DEBUG:{FILE_NAME}鼠标滚轮往下]")
+        elif event.delta < 0:
+            self.advanced_canvas.yview_scroll(step, UNITS)
+            #print(f"[DEBUG:{FILE_NAME}鼠标滚轮往上]")
+
+    def _bind_all_children_widget(self, parent, event, fun):
+        '''批量递归绑定子组件事件（解决子组件抢夺事件为己用的问题）'''
+        for child in parent.winfo_children():
+            child.bind(event, fun)
+            self._bind_all_children_widget(child, event, fun)
+
+
 
 class EditAccount(AddAccount):
     '''编辑账户窗口类（继承自添加账户窗口）'''
     def __init__(self, master, data_id, data):
         self.id = data_id
-        self.account = data["account"]
+        self.account = data["account"]          #获取原账户数据
         self.game_server_ip = data["game_server_ip"]
         self.game_server_port = data["game_server_port"]
         self.login_server_ip = data["login_server_ip"]
@@ -473,19 +541,21 @@ class EditAccount(AddAccount):
         self.role_name = data["role_name"]
         self.account_type = data["account_type"]
 
+        self.advanced_old_value_dic = advanced_data.selete_all(self.id)
+
         AddAccount.__init__(self, master)
 
         self.account_type_single_ver.set(self.account_type)
         self.window.title("编辑账户")
     
-    def init_single(self):
+    def _init_single(self):
         '''初始化登录方式单选建（重写）'''
         self.account_type_single_ver = StringVar() #登录方式选项初始化
         self.account_type_single_ver.set(self.account_type)
 
-    def ent(self):
+    def _init_ent(self):
         '''选择器、文本框（增加）'''
-        AddAccount.ent(self)
+        AddAccount._init_ent(self)
         self.account_type_microsoft_single.grid_forget()    #隐藏组件
         self.account_type_yggdrasil_single.grid_forget()
         self.account_type_offline_single.grid_forget()
@@ -505,16 +575,28 @@ class EditAccount(AddAccount):
             self.login_server_port_ent.insert(0, self.login_server_port)
             self.role_name_ent.insert(0, self.role_name)
 
-    def button(self):
+    def _init_button(self):
         '''按钮（修改）'''
-        AddAccount.button(self)
+        AddAccount._init_button(self)
         self.login_button.config(text="保存账户")
 
-    def run(self, new_user_data_dic):
+    def _init_advanced_widget(self):
+        AddAccount._init_advanced_widget(self)
+        for key in self.advanced_widget_dic:
+            if self.advanced_widget_dic[key]["type"] == "check_button":
+                self.advanced_widget_dic[key]["var"].set(self.advanced_old_value_dic[key])
+            elif self.advanced_widget_dic[key]["type"] == "combobox":
+                self.advanced_widget_dic[key]["widget"].set(self.advanced_old_value_dic[key])
+            elif self.advanced_widget_dic[key]["type"] == "entry":
+                self.advanced_widget_dic[key]["widget"].delete(0, END)
+                self.advanced_widget_dic[key]["widget"].insert(0, self.advanced_old_value_dic[key])
+
+    def run(self, new_user_data_dic, new_advanced_data_dic):
         '''提交修改账户（重写）'''
         if not new_user_data_dic["password"]:   #不输入密码表示不修改密码
             new_user_data_dic.pop("password")
         user_data.update(self.id, new_user_data_dic)
+        advanced_data.update(self.id, new_advanced_data_dic)
 
 class AccountFrame:
     '''账号启动框架类(存储账号的对象内容)'''

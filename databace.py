@@ -226,6 +226,7 @@ class AdvancedData(Data):
 
     #表列标题
     TABLE_COLUMNS = [
+        "id INTEGER PRIMARY KEY",                                                             # ID，账户在MCCGUI的唯一编号，用于查询
         "enable_sentry INTEGER CHECK (enable_sentry IN (0, 1))",                              # 将此项设置为 false（假），即可选择退出 / 禁用 Sentry 错误日志记录功能。
         "language TEXT",                                                                      # 使用的语言包
         "load_mcc_translation INTEGER CHECK (load_mcc_translation IN (0, 1))",                # 是否加载MCC翻译（0=禁用，1=启用）
@@ -233,7 +234,7 @@ class AdvancedData(Data):
         "internal_cmd_char TEXT CHECK (internal_cmd_char IN ('none', 'slash', 'backslash'))", # 内部命令前缀（none/slash/backslash）
         "message_cooldown REAL",                                                              # 消息发送间隔（秒）
         "bot_owners TEXT",                                                                    # 机器人所有者列表（格式：'["nick1","nick2"]'）
-        "minecraft_version TEXT",                                                             # 游戏版本（"auto" 或 "1.X.X"）
+        "minecraft_version TEXT",                                                             # 游戏版本（"auto" 或 "1.X.X"），MCC只支持 1.4.6 - 1.19.2
         "enable_forge TEXT CHECK (enable_forge IN ('auto', 'no', 'force'))",                  # Forge支持（auto/no/force），仅1.13+
         "brand_info TEXT",                                                                    # 客户端标识（如 "mcc"、"vanilla"）
         "chatbot_log_file TEXT",                                                              # ChatBot日志路径（留空禁用）
@@ -267,3 +268,4 @@ class AdvancedData(Data):
 
 
 user_data = UserData()
+advanced_data = AdvancedData()
