@@ -1,7 +1,6 @@
 # MCCGUI - Minecraft Console Client 图形化管理工具
 MCCGUI 是 Minecraft Console Client（MCC）的可视化管理界面，旨在简化 MCC 账户管理、假人启动/控制、服务器交互等操作，解决原生 MCC 纯命令行操作的痛点，同时提供丰富的个性化配置和稳定性优化。
-
-⚠️**分发状态**： 项目目前处于内部打磨阶段，暂未开放公开分发，敬请期待正式上线！
+⚠️ **分发状态**：目前项目还处在打磨阶段，暂未公开提供下载，敬请期待后续版本更新。
 
 ## ✨ 核心功能
 1. **账户管理**：支持离线/正版登录，账户增删改查、密码加密存储、配置文件独立管理；
@@ -20,6 +19,15 @@ MCCGUI 是 Minecraft Console Client（MCC）的可视化管理界面，旨在简
 2. 运行主程序，在「添加账户」界面填写服务器、登录方式等信息；
 3. 选择账户点击「启动」，打开控制窗口即可发送消息/查看假人状态；
 4. 如需高级配置，在账户编辑界面进入「高级设置」调整 MCC 参数。
+
+## 参考与溯源
+本工具为第三方独立开发，**非 MCC 官方开发或支持**，核心功能基于 MCC 公开功能与文档实现。
+
+### MCC官方资源
+- MCC 官方网站：https://mccteam.github.io/
+- MCC 中文官方网站：https://mccteam.github.io/l10n/zh-Hans/
+- MCC 官方源码与发行版：https://github.com/MCCTeam/Minecraft-Console-Client
+
 
 ## 📝 版本更新日志
 ### v0.7（最新）
