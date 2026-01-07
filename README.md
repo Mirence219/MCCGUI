@@ -37,7 +37,7 @@ MCCGUI 是 Minecraft Console Client（MCC）的可视化管理界面，旨在简
 本工具为基于 MCC 公开接口开发的第三方图形化辅助工具，**未获得 MCC 官方授权或技术支持**。所有 MCC 相关功能的合法性与稳定性，依赖于 MCC 官方开源许可与版本更新。
 
 ### 4. 许可文件获取
-- MCC CDDL-1.0 许可文本：[https://github.com/MCCTeam/Minecraft-Console-Client/blob/master/LICENSE](https://github.com/MCCTeam/Minecraft-Console-Client/blob/master/LICENSE)
+- MCC CDDL-1.0 许可文本：[https://github.com/MCCTeam/Minecraft-Console-Client/blob/master/LICENSE.md](https://github.com/MCCTeam/Minecraft-Console-Client/blob/master/LICENSE.md)
 - MCCGUI Apache 2.0 许可文本：项目根目录下 `LICENSE` 文件
 
 ## MCC官方资源
