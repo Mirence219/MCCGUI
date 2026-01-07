@@ -21,10 +21,26 @@ MCCGUI 是 Minecraft Console Client（MCC）的可视化管理界面，旨在简
 3. 选择账户点击「启动」，打开控制窗口即可发送消息/查看假人状态；
 4. 如需高级配置，在账户编辑界面进入「高级设置」调整 MCC 参数。
 
-## 参考与溯源
-本工具为第三方独立开发，**非 MCC 官方开发或支持**，核心功能基于 MCC 公开功能与文档实现。
+## 📜 开源许可与合规声明
+### 1. 许可适用范围界定
+| 代码/文件类型                | 采用许可       | 适用说明                                  |
+|-----------------------------|----------------|-------------------------------------------|
+| Minecraft Console Client（MCC）原始代码 | CDDL-1.0       | 包括 MCC 核心程序、配置接口等官方代码     |
+| MCCGUI 自主开发代码（界面、逻辑、数据库等） | Apache 2.0 | 不包含任何 MCC 原始代码的独立开发部分    |
+| MCCGUI 中修改的 MCC 相关适配代码 | CDDL-1.0 | 遵循原项目许可要求，与 MCC 代码保持许可一致 |
 
-### MCC官方资源
+### 2. 合规义务履行
+- **CDDL-1.0 合规**：完整保留 MCC 原始代码中的版权声明、专利声明及许可文本；修改的 MCC 适配代码以 CDDL-1.0 许可开源；分发时附带 CDDL-1.0 许可完整副本。
+- **Apache 2.0 合规**：MCCGUI 自主代码包含完整的 Apache 2.0 版权声明；允许商用、修改、分发，需保留原声明且不得承担额外连带责任。
+
+### 3. 第三方工具声明
+本工具为基于 MCC 公开接口开发的第三方图形化辅助工具，**未获得 MCC 官方授权或技术支持**。所有 MCC 相关功能的合法性与稳定性，依赖于 MCC 官方开源许可与版本更新。
+
+### 4. 许可文件获取
+- MCC CDDL-1.0 许可文本：[https://github.com/MCCTeam/Minecraft-Console-Client/blob/master/LICENSE](https://github.com/MCCTeam/Minecraft-Console-Client/blob/master/LICENSE)
+- MCCGUI Apache 2.0 许可文本：项目根目录下 `LICENSE` 文件
+
+## MCC官方资源
 - MCC 官方网站：https://mccteam.github.io/
 - MCC 中文官方网站：https://mccteam.github.io/l10n/zh-Hans/
 - MCC 官方源码与发行版：https://github.com/MCCTeam/Minecraft-Console-Client
