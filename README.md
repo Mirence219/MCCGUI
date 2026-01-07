@@ -1,5 +1,6 @@
 # MCCGUI - Minecraft Console Client 图形化管理工具
 MCCGUI 是 Minecraft Console Client（MCC）的可视化管理界面，旨在简化 MCC 账户管理、假人启动/控制、服务器交互等操作，解决原生 MCC 纯命令行操作的痛点，同时提供丰富的个性化配置和稳定性优化。
+
 ⚠️ **分发状态**：目前项目还处在打磨阶段，暂未公开提供下载，敬请期待后续版本更新。
 
 ## ✨ 核心功能
