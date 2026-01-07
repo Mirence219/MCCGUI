@@ -38,7 +38,7 @@ MCCGUI 是 Minecraft Console Client（MCC）的可视化管理界面，旨在简
 
 ### 4. 许可文件获取
 - MCC CDDL-1.0 许可文本：[https://github.com/MCCTeam/Minecraft-Console-Client/blob/master/LICENSE.md](https://github.com/MCCTeam/Minecraft-Console-Client/blob/master/LICENSE.md)
-- MCCGUI Apache 2.0 许可文本：项目根目录下 `LICENSE` 文件
+- MCCGUI Apache 2.0 许可文本：[项目根目录下 `LICENSE` 文件](https://github.com/Mirence219/MCCGUI/edit/master/LICENSE)
 
 ## MCC官方资源
 - MCC 官方网站：https://mccteam.github.io/
