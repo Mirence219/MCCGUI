@@ -149,7 +149,7 @@ class MCC_Process(Process):
                 allow_output = True
                 ansi_text = text.strip()    
                 out_text = re.sub(r'\x1b\[[0-9;]*m', '', ansi_text)
-                health_match = re.match(r"^\[MCC\] Health: (\d+\.?\d*), Saturation: (\d+\.?\d*), Level: (\d+\.?\d*), TotalExperience: (\d+\.?\d*)", out_text)
+                health_match = re.search(r"\[MCC\] Health: (\d+\.?\d*), Saturation: (\d+\.?\d*), Level: (\d+\.?\d*), TotalExperience: (\d+\.?\d*)", out_text)
                 if health_match:
                     allow_output = False
 
@@ -175,7 +175,7 @@ class MCC_Process(Process):
                     else:
                         if health_match:
                             #print("匹配成功！ " ,  health_match.groups())
-                            health, saturation, level, total_experience = map(float, health_match.groups())
+                            health, saturation, level, total_experience = map(float, health_match.groups())   #过滤时间戳
                             self.state_dic.update({
                                 "alive" : health > 0,
                                 "health" : round(health, 1),
@@ -219,6 +219,7 @@ class MCC_Process(Process):
             if self.connect:
                 self.result.stdin.write("/health" + "\n")
                 self.result.stdin.flush()
+                #print("获取状态中")
             time.sleep(1)
 
         print(f"[DEBUG:{FILE_NAME}]子线程{self.state_thread.name}（{self.state_thread.ident}）已关闭")

@@ -65,8 +65,10 @@ def decrypt(encrypted_text, key = key) -> str:
     try:
         plain_text_bytes = fernet.decrypt(encrypted_text_bytes)
     except InvalidToken:
-        print(f"[WANRNING]该文本不是密文，将直接返回原内容：{encrypted_text}")
+        print(f"[WANRNING:{FILE_NAME}]该文本不是密文，将直接返回原内容：{encrypted_text}")
         return encrypted_text
+    except Exception as e:
+        print(f"[WANRNING:{FILE_NAME}]J解密出现问题，报错：{e}")
     plain_text = plain_text_bytes.decode("utf-8")
     print(f"[DEBUG:{FILE_NAME}]已解密：{plain_text}")
     return plain_text

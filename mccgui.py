@@ -12,7 +12,7 @@ from multiprocessing import Queue, Value, freeze_support
 from threading import Thread
 import logging
 import sys
-from turtle import width
+from turtle import distance, width
 from typing import List
 import ping3
 
@@ -94,7 +94,7 @@ class MCC_GUI():
         print(f"[DEBUG:{FILE_NAME}]账号数量",self.count)
         for data_id, data_dic in user_data.get_all():
             self.verification(data_dic, data_id)
-            self.accounts.append(AccountFrame(self, data_id, data_dic))
+            self.accounts.append(AccountFrame(self, data_id))
             self.accounts[-1].frame.pack(fill="both", padx=4)
             print(f"[DEBUG:{FILE_NAME}]账户id={data_id}已生成")
 
@@ -368,34 +368,39 @@ class AddAccount:
 
 
         #枚举选项
-        listbox_items = [
-            ("language", "语言包", language_opions, "zh_cn"),
+        combobox_items = [
+            ("language", "语言包", language_opions, None, "zh_cn"),
             #("internal_cmd_char", "内部命令前缀", ('none', 'slash', 'backslash'), "slash"),  
-            ("enable_forge", "Forge支持", ('auto', 'no', 'force'), "auto"),  
-            ("brand_info", "客户端标识", ('mcc', 'vanilla', 'empty'), "mcc"),
-            ("session_cache", "会话缓存", ('none', 'memory', 'disk'), "disk"), 
-            ("profile_key_cache", "聊天密钥缓存", ('none', 'memory', 'disk'), "disk"),  
-            ("resolve_srv_records", "SRV记录解析", ('no', 'fast', 'yes'), "fast") 
+            ("enable_forge", "Forge支持", ('auto', 'no', 'force'), ('自动', '关闭', '开启'),"auto"),  
+            ("brand_info", "客户端标识", ('mcc', 'vanilla', 'empty'), ('MCC', '原版', '无'), "mcc"),
+            ("session_cache", "会话缓存", ('none', 'memory', 'disk'), ('不保存', '保存到内存', '保存到磁盘'), "disk"), 
+            ("profile_key_cache", "聊天密钥缓存", ('none', 'memory', 'disk'), ('不保存', '保存到内存', '保存到磁盘'), "disk"),  
+            ("resolve_srv_records", "SRV记录解析", ('no', 'fast', 'yes'), ('禁用', '快速模式', '完整模式'), "fast") 
         ]
 
-        for key, val, options, default_value in listbox_items:
+        for key, val, options, display_options, default_value in combobox_items:
             frame = Frame(self.advanced_frame, width=self.WIDTH//self.advanced_widget_columns_count)
             label = Label(frame, text=val)
             comb = Combobox(frame, value=options, state="readonly", width=10)
             comb.set(default_value)
 
+            if display_options:         #有翻译选项则显示翻译
+                comb.config(value=display_options)
+                default_index = options.index(default_value)
+                comb.set(display_options[default_index])
+
             self.advanced_value_dic[key] = default_value
-            self.advanced_widget_dic[key] = {"type" : "combobox", "widget" : comb, "label" : label, "frame" : frame}
+            self.advanced_widget_dic[key] = {"type" : "combobox", "widget" : comb, "label" : label, "frame" : frame, "options" : options, "display_options" : display_options}
 
 
          #自由输入选项
         entry_items = entry_items = [
             #("console_title", "MCC窗口标题", "%username%@%serverip% - Minecraft Console Client"),
             ("message_cooldown", "消息发送间隔（秒）", 1.0),
-            ("bot_owners", "机器人所有者", ""),
+            #("bot_owners", "机器人所有者", ""),
             ("minecraft_version", "游戏版本", "1.20.4" if MangoCraft else "auto"),
-            ("chatbot_log_file", "Bot日志路径", ""),
-            ("private_msgs_cmd_name", "远程控制命令名称", "tell"),
+            #("chatbot_log_file", "Bot日志路径", ""),
+            #("private_msgs_cmd_name", "远程控制命令名称", "tell"),
             ("movement_speed", "移动速度", 2),
             ("tcp_timeout", "连接超时时间（秒）", 30),
             #("min_terminal_width", "终端最小宽度", 16),
@@ -460,10 +465,11 @@ class AddAccount:
         account_type=self.account_type_single_ver.get()             #读取输入同时验证是否留空
 
         if account_type == "yggdrasil":
-           password = encrypt(self.password_ent.get())
-           login_server_ip = self.login_server_ip_ent.get()
-           login_server_port = self.login_server_port_ent.get()
-           role_name = self.role_name_ent.get()
+            if self.password_ent.get():
+                password = encrypt(self.password_ent.get())
+            login_server_ip = self.login_server_ip_ent.get()
+            login_server_port = self.login_server_port_ent.get()
+            role_name = self.role_name_ent.get()
 
         account = self.account_ent.get()
         game_server_ip = self.game_server_ip_ent.get()
@@ -494,7 +500,16 @@ class AddAccount:
             for key in self.advanced_value_dic:             #获取高级设置内容
                 if self.advanced_widget_dic[key]["type"] == "check_button":
                     value = bool(self.advanced_widget_dic[key]["var"].get())
-                elif self.advanced_widget_dic[key]["type"] in ("entry", "combobox"):
+
+                elif self.advanced_widget_dic[key]["type"] == "combobox":
+                    if not self.advanced_widget_dic[key]["display_options"]:
+                        value = self.advanced_widget_dic[key]["widget"].get()
+                    else:
+                        display_value = self.advanced_widget_dic[key]["widget"].get()
+                        value_index = self.advanced_widget_dic[key]["display_options"].index(display_value)
+                        value = self.advanced_widget_dic[key]["options"][value_index]
+
+                elif self.advanced_widget_dic[key]["type"] == "entry":
                     value = self.advanced_widget_dic[key]["widget"].get()
 
                 self.advanced_value_dic[key] = value
@@ -507,8 +522,7 @@ class AddAccount:
     def run(self, new_user_data_dic, new_advanced_data_dic):
         '''添加账户（继承后可以重写）'''
         user_data.add(new_user_data_dic)
-        advanced_data.add(new_advanced_data_dic)
-        
+        advanced_data.add(new_advanced_data_dic)       
 
     def _mouse_wheel(self, event):
         '''处理鼠标滚轮事件（滚动条）'''
@@ -586,7 +600,11 @@ class EditAccount(AddAccount):
             if self.advanced_widget_dic[key]["type"] == "check_button":
                 self.advanced_widget_dic[key]["var"].set(self.advanced_old_value_dic[key])
             elif self.advanced_widget_dic[key]["type"] == "combobox":
-                self.advanced_widget_dic[key]["widget"].set(self.advanced_old_value_dic[key])
+                if not self.advanced_widget_dic[key]["display_options"]:
+                    self.advanced_widget_dic[key]["widget"].set(self.advanced_old_value_dic[key])
+                else:
+                    option_index = self.advanced_widget_dic[key]["options"].index(self.advanced_old_value_dic[key])
+                    self.advanced_widget_dic[key]["widget"].set(self.advanced_widget_dic[key]["display_options"][option_index])  #显示翻译
             elif self.advanced_widget_dic[key]["type"] == "entry":
                 self.advanced_widget_dic[key]["widget"].delete(0, END)
                 self.advanced_widget_dic[key]["widget"].insert(0, self.advanced_old_value_dic[key])
@@ -595,16 +613,18 @@ class EditAccount(AddAccount):
         '''提交修改账户（重写）'''
         if not new_user_data_dic["password"]:   #不输入密码表示不修改密码
             new_user_data_dic.pop("password")
+        pprint(new_user_data_dic)
         user_data.update(self.id, new_user_data_dic)
         advanced_data.update(self.id, new_advanced_data_dic)
 
 class AccountFrame:
     '''账号启动框架类(存储账号的对象内容)'''
-    def __init__(self, master, data_id, data):
+    def __init__(self, master, data_id):
         self.master = master
         self.frame = LabelFrame(self.master.main_frame)
         self.id = data_id
-        self.data = data
+        self.user_data = user_data.selete_all(self.id)
+        self.advanced_data = advanced_data.selete_all(self.id)
         self.control_window = None
         self.exe = None
         self.working = False
@@ -690,31 +710,32 @@ class AccountFrame:
         self.edit_button.pack(side="right",fill="y")
 
     def text(self):
-        if self.data["account_type"]=="microsoft":
-            self.account_text=Label(self.frame,text="正版账户：" + self.data["account"])
+        if self.user_data["account_type"]=="microsoft":
+            self.account_text=Label(self.frame,text="正版账户：" + self.user_data["account"])
             self.account_text.pack(anchor="w")
-            self.game_server_ip_text=Label(self.frame,text="游戏服务器IP：" + self.data["game_server_ip"])
+            self.game_server_ip_text=Label(self.frame,text="游戏服务器IP：" + self.user_data["game_server_ip"])
             self.game_server_ip_text.pack(anchor="w")
-        elif self.data["account_type"]=="yggdrasil":
-            self.account_text=Label(self.frame,text="认证服务器账户："+ self.data["account"])
+        elif self.user_data["account_type"]=="yggdrasil":
+            self.account_text=Label(self.frame,text="认证服务器账户："+ self.user_data["account"])
             self.account_text.pack(anchor="w")
-            self.login_server_ip_text=Label(self.frame,text="认证服务器IP：" + self.data["login_server_ip"])
+            self.login_server_ip_text=Label(self.frame,text="认证服务器IP：" + self.user_data["login_server_ip"])
             self.login_server_ip_text.pack(anchor="w")
-            self.game_server_ip_text=Label(self.frame,text="游戏服务器IP：" + self.data["game_server_ip"])
+            self.game_server_ip_text=Label(self.frame,text="游戏服务器IP：" + self.user_data["game_server_ip"])
             self.game_server_ip_text.pack(anchor="w")
-            self.role_name_text=Label(self.frame,text="角色名：" + self.data["role_name"])
+            self.role_name_text=Label(self.frame,text="角色名：" + self.user_data["role_name"])
             self.role_name_text.pack(anchor="w")
-        elif self.data["account_type"]=="offline":
-            self.account_text=Label(self.frame,text="离线账户：" + self.data["account"])
+        elif self.user_data["account_type"]=="offline":
+            self.account_text=Label(self.frame,text="离线账户：" + self.user_data["account"])
             self.account_text.pack(anchor="w")
-            self.game_server_ip_text=Label(self.frame,text="游戏服务器IP：" + self.data["game_server_ip"])
+            self.game_server_ip_text=Label(self.frame,text="游戏服务器IP：" + self.user_data["game_server_ip"])
             self.game_server_ip_text.pack(anchor="w")
 
     def start(self):
+        print("启动信息：", self.user_data)
         if not self.working:
             self.start_handler()
             self.start_button.config(text="退出")
-            set_toml.set_user_data(self.data, self.path_dic["ini_path"])
+            set_toml.set_data(self.user_data, self.advanced_data, self.path_dic["ini_path"])
             if self.exe != None and self.exe.is_alive():
                 print(f"[DEBUG:{FILE_NAME}]上一个相同子进程（{self.exe.pid}）未结束，将强制终止")
                 self.close_MCC()
@@ -753,7 +774,7 @@ class AccountFrame:
 
     def edit(self):
         if not self.working:
-            self.edit_window = EditAccount(self.master, self.id, self.data)
+            self.edit_window = EditAccount(self.master, self.id, self.user_data)
         else:
             print(f"[DEBUG:{FILE_NAME}]进程工作中无法编辑！")
 
@@ -771,34 +792,34 @@ class AccountFrame:
             command_output = self.get_command_queue.get(False)
             if self.working:
                 if command_output == "close":
-                    print(f"[DEBUG:{FILE_NAME}]父进程（{os.getpid()}）接收到{self.data["role_name"]}子进程（{self.exe.pid}）的反馈信号\"close\",即将自动关闭")
+                    print(f"[DEBUG:{FILE_NAME}]父进程（{os.getpid()}）接收到{self.user_data["role_name"]}子进程（{self.exe.pid}）的反馈信号\"close\",即将自动关闭")
                     self.working = False
                     self.stop()
 
                 elif command_output == "restart":
-                    print(f"[DEBUG:{FILE_NAME}]父进程（{os.getpid()}）接收到{self.data["role_name"]}子进程（{self.exe.pid}）的反馈信号\"restart\"，即将尝试重连")
+                    print(f"[DEBUG:{FILE_NAME}]父进程（{os.getpid()}）接收到{self.user_data["role_name"]}子进程（{self.exe.pid}）的反馈信号\"restart\"，即将尝试重连")
                     if self.restart_count < 3:
                         self.restart()
                     else:
-                        self.window_print(f"[MCCGUI] {self.data["role_name"]}子进程（{self.exe.pid}）重连失败，即将自动关闭", self.log)
+                        self.window_print(f"[MCCGUI] {self.user_data["role_name"]}子进程（{self.exe.pid}）重连失败，即将自动关闭", self.log)
                         self.working = False
                         self.stop()
 
                 elif command_output == "connect":
-                    print(f"[DEBUG:{FILE_NAME}]父进程（{os.getpid()}）接收到{self.data["role_name"]}子进程（{self.exe.pid}）的反馈信号\"connect\"")
+                    print(f"[DEBUG:{FILE_NAME}]父进程（{os.getpid()}）接收到{self.user_data["role_name"]}子进程（{self.exe.pid}）的反馈信号\"connect\"")
                     if self.restart_count > 0:
                         self.restart_count = 0
                         self.window_print(f"[MCCGUI] 重连成功！重连次数已经清零{self.restart_count}/{self.max_restart_count}", self.log)
 
                 elif command_output == "dead":
-                    print(f"[DEBUG:{FILE_NAME}]父进程（{os.getpid()}）接收到{self.data["role_name"]}子进程（{self.exe.pid}）的反馈信号\"respawn\"")
+                    print(f"[DEBUG:{FILE_NAME}]父进程（{os.getpid()}）接收到{self.user_data["role_name"]}子进程（{self.exe.pid}）的反馈信号\"respawn\"")
                     if self.auto_quit:
-                        self.window_print(f"[MCCGUI] 已开启死亡退出，{self.data["role_name"]}将重生并立即退出游戏。", self.log)
+                        self.window_print(f"[MCCGUI] 已开启死亡退出，{self.user_data["role_name"]}将重生并立即退出游戏。", self.log)
                         self.respawn()
                         self.stop()
 
                 elif command_output == "oauth20":
-                    print(f"[DEBUG:{FILE_NAME}]父进程（{os.getpid()}）接收到{self.data["role_name"]}子进程（{self.exe.pid}）的反馈信号\"oauth20\"")
+                    print(f"[DEBUG:{FILE_NAME}]父进程（{os.getpid()}）接收到{self.user_data["role_name"]}子进程（{self.exe.pid}）的反馈信号\"oauth20\"")
                     self.control()
                     self.control_window.open_oauth20_window()
                         
@@ -836,7 +857,7 @@ class AccountFrame:
     def respawn(self):
         if self.working:
             self.in_queue.put("/respawn")
-            self.window_print(f"[MCCGUI] {self.data["role_name"]}已重生", self.log)
+            self.window_print(f"[MCCGUI] {self.user_data["role_name"]}已重生", self.log)
     
     def send_command(self, command):
         '''向子进程发送命令'''
@@ -847,7 +868,7 @@ class AccountFrame:
         self.send_command("close_mcc")
 
     def creat_process(self, if_restart = False):
-        self.exe = start.MCC_Process(self.path_dic, self.in_queue, self.out_queue, self.put_command_queue, self.get_command_queue, self.state_queue, self.data, if_restart)
+        self.exe = start.MCC_Process(self.path_dic, self.in_queue, self.out_queue, self.put_command_queue, self.get_command_queue, self.state_queue, self.user_data, if_restart)
 
     def window_print(self, text, log = None):
         '''输出内容到输出流、日志（如果有）和监听窗口'''
@@ -860,37 +881,37 @@ class AccountFrame:
         timeout = 5
 
         try:
-            self.game_server_daley = ping3.ping(self.data["game_server_ip"], timeout=timeout)    #单位：秒
+            self.game_server_daley = ping3.ping(self.user_data["game_server_ip"], timeout=timeout)    #单位：秒
         except Exception as e:
             self.login_server_daley = False
-            print(f"[DEBUG:{FILE_NAME}]{self.data["role_name"]}连通性测试失败，报错：{e}")
+            print(f"[DEBUG:{FILE_NAME}]{self.user_data["role_name"]}连通性测试失败，报错：{e}")
 
         if self.game_server_daley:
-            print(f"[DEBUG:{FILE_NAME}]{self.data["role_name"]}游戏服务器延迟（{self.data["game_server_ip"]}）：{self.game_server_daley * 1000:.2f}ms")
+            print(f"[DEBUG:{FILE_NAME}]{self.user_data["role_name"]}游戏服务器延迟（{self.user_data["game_server_ip"]}）：{self.game_server_daley * 1000:.2f}ms")
             self.game_server_daley_display = str(int(self.game_server_daley * 1000)) + "ms"
         elif self.game_server_daley == False:
-            print(f"[DEBUG:{FILE_NAME}]{self.data["role_name"]}游戏服务器无法连接")
+            print(f"[DEBUG:{FILE_NAME}]{self.user_data["role_name"]}游戏服务器无法连接")
             self.game_server_daley_display = "未知的主机"
         elif self.game_server_daley == None:
-            print(f"[DEBUG:{FILE_NAME}]{self.data["role_name"]}游戏服务器连接超时")
+            print(f"[DEBUG:{FILE_NAME}]{self.user_data["role_name"]}游戏服务器连接超时")
             self.game_server_daley_display = "连接超时"
         
-        if self.data["account_type"] == "yggdrasil":
+        if self.user_data["account_type"] == "yggdrasil":
 
             try:
-                self.login_server_daley = ping3.ping(self.data["login_server_ip"], timeout=timeout)
+                self.login_server_daley = ping3.ping(self.user_data["login_server_ip"], timeout=timeout)
             except Exception as e:
                 self.login_server_daley = False
-                print(f"[DEBUG:{FILE_NAME}]{self.data["role_name"]}连通性测试失败，报错：{e}")
+                print(f"[DEBUG:{FILE_NAME}]{self.user_data["role_name"]}连通性测试失败，报错：{e}")
 
             if self.login_server_daley:
-                print(f"[DEBUG:{FILE_NAME}]{self.data["role_name"]}认证服务器延迟（{self.data["login_server_ip"]}）：{self.login_server_daley * 1000:.2f}ms")
+                print(f"[DEBUG:{FILE_NAME}]{self.user_data["role_name"]}认证服务器延迟（{self.user_data["login_server_ip"]}）：{self.login_server_daley * 1000:.2f}ms")
                 self.login_server_daley_display = str(int(self.login_server_daley * 1000)) + "ms"
             elif self.login_server_daley == False:
-                print(f"[DEBUG:{FILE_NAME}]{self.data["role_name"]}认证服务器无法连接")
+                print(f"[DEBUG:{FILE_NAME}]{self.user_data["role_name"]}认证服务器无法连接")
                 self.login_server_daley_display = "未知的主机"
             elif self.login_server_daley == None:
-                print(f"[DEBUG:{FILE_NAME}]{self.data["role_name"]}认证服务器连接超时")
+                print(f"[DEBUG:{FILE_NAME}]{self.user_data["role_name"]}认证服务器连接超时")
                 self.login_server_daley_display = "连接超时"
             
         self.ping_display()
@@ -898,14 +919,14 @@ class AccountFrame:
     def ping_display(self):
         try:
             if self.game_server_ip_text:
-                self.game_server_ip_text.config(text=f"游戏服务器IP：{str(self.data["game_server_ip"])} \t延迟：{self.game_server_daley_display}")
-            if self.data["account_type"] == "yggdrasil" and self.login_server_ip_text:
-                self.login_server_ip_text.config(text=f"认证服务器IP：{str(self.data["login_server_ip"])} \t\t延迟：{self.login_server_daley_display}")
+                self.game_server_ip_text.config(text=f"游戏服务器IP：{str(self.user_data["game_server_ip"])} \t延迟：{self.game_server_daley_display}")
+            if self.user_data["account_type"] == "yggdrasil" and self.login_server_ip_text:
+                self.login_server_ip_text.config(text=f"认证服务器IP：{str(self.user_data["login_server_ip"])} \t\t延迟：{self.login_server_daley_display}")
         except Exception as e:
             print(f"[ERROR:{FILE_NAME}]PING无法显示，报错：{e}")
 
     def ping_update(self):
-        self.ping_thread = Thread(name=f"{self.data["role_name"]}-ping_thread", target=self.ping)  #连通性测试线程
+        self.ping_thread = Thread(name=f"{self.user_data["role_name"]}-ping_thread", target=self.ping)  #连通性测试线程
         self.ping_thread.start()
 
     def ping_init(self):
@@ -1116,6 +1137,7 @@ class OAuth20Window:
         self.window.geometry(f"{self.WIDTH}x{self.HEIGHT}+{master.window.winfo_x() +(master.window.winfo_width()-self.WIDTH)//2}+{master.window.winfo_y()+(master.window.winfo_height()-self.HEIGHT)//2}")  #窗口居中显示
         self.window.grab_set()
         self.window.resizable(False,False)
+        self.window.protocol("WM_DELETE_WINDOW", self.cancel)    #关闭窗口表示取消
 
         self.queue = queue
         self.master = master
@@ -1137,11 +1159,11 @@ class OAuth20Window:
     def display(self):
         '''显示组件'''
         self.frame1.pack()
-        self.frame2.pack()
+        self.frame2.pack(pady=5)
         self.text_lable.pack()
         self.code_ent.pack()
-        self.send_button.pack(expand=True)
-        self.cancel_button.pack(expand=True)
+        self.send_button.grid(row=0, column=0, padx=3)
+        self.cancel_button.grid(row=0, column=1, padx=3)
 
     def frame(self):
         '''框架'''

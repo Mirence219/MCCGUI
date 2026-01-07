@@ -156,7 +156,7 @@ class Data:
         '''获取指定id的全部数据'''
         conn = connect(DB_NAME)
         cursor = conn.cursor()
-        print(self.columns())
+        #print(self.columns())
 
         try:
             sql = f"SELECT * FROM {self.TABLE_NAME} WHERE id = ?"
@@ -245,7 +245,7 @@ class AdvancedData(Data):
         "show_inventory_layout INTEGER CHECK (show_inventory_layout IN (0, 1))",              # 显示库存布局（/inventory命令）
         "terrain_and_movements INTEGER CHECK (terrain_and_movements IN (0, 1))",              # 地形处理和移动（0=禁用，1=启用）
         "move_head_while_walking INTEGER CHECK (move_head_while_walking IN (0, 1))",          # 移动时转向头部（防反作弊）
-        "movement_speed REAL",                                                                # 移动速度（建议≤2）
+        "movement_speed INTEGER",                                                                # 移动速度（建议≤2）
         "temporary_fix_badpacket INTEGER CHECK (temporary_fix_badpacket IN (0, 1))",          # 修复坏数据包问题（需启用地形处理）
         "inventory_handling INTEGER CHECK (inventory_handling IN (0, 1))",                    # 库存处理（0=禁用，1=启用），1.4.6-1.9不支持
         "entity_handling INTEGER CHECK (entity_handling IN (0, 1))",                          # 实体处理（0=禁用，1=启用），1.4.6-1.7不支持
