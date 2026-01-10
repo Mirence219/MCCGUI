@@ -33,7 +33,7 @@ FILE_NAME = os.path.basename(__file__)
 MCC_PATH = os.path.join("bin", "MinecraftClient.exe")
 
 #主窗口标题
-MAIN_WINDOW_TITLE = f"MCC GUI 可交互式工具 v{__version__}{" 芒果方块粉丝服定制版" if MangoCraft else ""}"
+MAIN_WINDOW_TITLE = f"MCC 图形化管理界面 v{__version__}{" 芒果方块粉丝服定制版" if MangoCraft else ""}"
 
 #用户表字段列表（不包括id）
 USER_DATA_COLUMNS = list(user_data.columns())
@@ -68,7 +68,8 @@ class MCC_GUI():
 
         self.button()
         self.show_accounts()
-       
+
+        self.update_ping()
 
     def button(self):
         '''主窗口按钮初始化'''
@@ -76,7 +77,7 @@ class MCC_GUI():
         self.control_frame.pack(fill=X, padx=10)
         self.add_account_button=Button(self.control_frame,text="添加账户",command=self.open_add_account_window)
         self.add_account_button.pack(side=LEFT, ipadx=5, ipady=2, pady=5)
-        self.update_ping_button = Button(self.control_frame, text="刷新", command=self.ping)
+        self.update_ping_button = Button(self.control_frame, text="刷新", command=self.update_ping)
         self.update_ping_button.pack(side=RIGHT, pady=5)
 
     def open_add_account_window(self):
@@ -85,24 +86,24 @@ class MCC_GUI():
 
     def show_accounts(self):
         '''读取并展示已保存的账户,同时校验保存的数据'''
-        if self.accounts_init:
-            for i in self.accounts:
-                i.frame.destroy()
         self.accounts_init = True
         self.accounts=[]
         self.count=len(user_data)
         print(f"[DEBUG:{FILE_NAME}]账号数量",self.count)
         for data_id, data_dic in user_data.get_all():
-            self.verification(data_dic, data_id)
+            self._verification(data_dic, data_id)
             self.accounts.append(AccountFrame(self, data_id))
             self.accounts[-1].frame.pack(fill="both", padx=4)
             print(f"[DEBUG:{FILE_NAME}]账户id={data_id}已生成")
 
-    def update_account(self):
+    def _update_display(self):
         '''更新账户列表'''
-        self.show_accounts()
+        for account in self.accounts:
+            account._clear_widgets()
+        for account in self.accounts:
+            account._display_widgets()
 
-    def verification(self,user_data_dic,data_id):
+    def _verification(self,user_data_dic,data_id):
         '''校验并修复文件'''
         num = str(data_id+1000)[1:]
         flag = False
@@ -121,11 +122,24 @@ class MCC_GUI():
                 account.close_MCC()
         sys.exit(0)
 
-    def ping(self):
-        '''对各个账户服务器进行连通性测试'''
+    def update_ping(self):
+        '''对账户列表内的服务器IP进行连通性测试'''
+        self.ip_dic = {}      #字典，保证IP不重复
         for account in self.accounts:
-            account.ping_update()
-            account.ping_display()
+            account.creat_ping_thread() 
+
+    def add_account(self, data_id):
+        '''添加账户并显示'''
+        self.accounts.append(AccountFrame(self, data_id))
+        self.accounts[-1].frame.pack(fill="both", padx=4)
+        print(f"[DEBUG:{FILE_NAME}]账户id={data_id}已添加并生成")
+        self._update_display()
+
+    def delete_account(self, account):
+        '''删除账户并去除显示'''
+        account._clear_frame()
+        self.accounts.remove(account)
+        self._update_display()
 
 class AddAccount:
     '''添加账户窗口类'''
@@ -142,22 +156,21 @@ class AddAccount:
         self.window.geometry(f"{self.WIDTH}x{self.HEIGHT}+{master.window.winfo_x()+(master.window.winfo_width()-self.WIDTH)//2}+{master.window.winfo_y()+(master.window.winfo_height()-self.HEIGHT)//2}")  #窗口居中显示
         self.master = master
         
-        self._init_widget()
-        self._display_widget()
+        self._init_widgets()
+        self._display_widgets()
 
-
-    def _init_widget(self):
+    def _init_widgets(self):
         '''初始化组件'''
         self._init_note()           #选项卡
-        self._init_normal_widget()  #常规
-        #self._init_client_widget()  #客户端
-        self._init_advanced_widget() #高级
+        self._init_normal_widgets()  #常规
+        #self._init_client_widgets()  #客户端
+        self._init_advanced_widgets() #高级
 
-    def _display_widget(self):
-        self._display_note()
-        self._display_advanced_widget()
+    def _display_widgets(self):
+        self._display_notes()
+        self._display_advanced_widgets()
 
-    def _init_normal_widget(self):
+    def _init_normal_widgets(self):
         '''初始化常规选项组件'''
         self._init_single()
         self._init_frame()
@@ -180,7 +193,7 @@ class AddAccount:
         self.warning=Label(self.frame3,fg="red")
         self.warning.pack()
 
-    def _display_note(self):
+    def _display_notes(self):
         '''显示控件'''
         self.note.add(self.normal_note, text = "常规")
         #self.note.add(self.client_note, text = "客户端")
@@ -285,10 +298,14 @@ class AddAccount:
 
     def update(self):
         '''刷新组件'''
+        self._clear_widgets()
+        self._spawn()
+
+    def _clear_widgets(self):
+        '''清除组件'''
         for i in (self.frame1,self.frame2,self.frame3):
             for j in i.winfo_children():
                 j.destroy()
-        self._spawn()
 
     def _init_note(self):
         '''选项卡'''
@@ -297,7 +314,7 @@ class AddAccount:
         self.client_note = Frame(self.note)     #客户端选项卡
         self.advanced_note = Frame(self.note)    #高级选项卡
 
-    def _init_advanced_widget(self):
+    def _init_advanced_widgets(self):
         '''初始化高级选项（客户端和高级）'''
 
         self.advanced_canvas = Canvas(self.advanced_note, highlightthickness=0, width=self.WIDTH-20)
@@ -419,7 +436,7 @@ class AddAccount:
 
         self._bind_all_children_widget(self.advanced_canvas, "<MouseWheel>", self._mouse_wheel)      #绑定鼠标滚轮事件
 
-    def _display_advanced_widget(self):
+    def _display_advanced_widgets(self):
         '''显示所有高级选项'''
        
         for i in range(self.advanced_widget_columns_count):
@@ -514,15 +531,14 @@ class AddAccount:
 
                 self.advanced_value_dic[key] = value
 
-            self.run(new_user_data_dic, self.advanced_value_dic)     
-
-            self.master.update_account()
+            self._run(new_user_data_dic, self.advanced_value_dic) 
             self.window.destroy()
 
-    def run(self, new_user_data_dic, new_advanced_data_dic):
+    def _run(self, new_user_data_dic, new_advanced_data_dic):
         '''添加账户（继承后可以重写）'''
-        user_data.add(new_user_data_dic)
-        advanced_data.add(new_advanced_data_dic)       
+        data_id = user_data.add(new_user_data_dic)
+        advanced_data.add(new_advanced_data_dic, data_id)      
+        self.master.add_account(data_id) 
 
     def _mouse_wheel(self, event):
         '''处理鼠标滚轮事件（滚动条）'''
@@ -541,11 +557,9 @@ class AddAccount:
             child.bind(event, fun)
             self._bind_all_children_widget(child, event, fun)
 
-
-
 class EditAccount(AddAccount):
     '''编辑账户窗口类（继承自添加账户窗口）'''
-    def __init__(self, master, data_id, data):
+    def __init__(self, master, submaster, data_id, data):
         self.id = data_id
         self.account = data["account"]          #获取原账户数据
         self.game_server_ip = data["game_server_ip"]
@@ -559,6 +573,7 @@ class EditAccount(AddAccount):
 
         AddAccount.__init__(self, master)
 
+        self.submaster = submaster
         self.account_type_single_ver.set(self.account_type)
         self.window.title("编辑账户")
     
@@ -609,13 +624,15 @@ class EditAccount(AddAccount):
                 self.advanced_widget_dic[key]["widget"].delete(0, END)
                 self.advanced_widget_dic[key]["widget"].insert(0, self.advanced_old_value_dic[key])
 
-    def run(self, new_user_data_dic, new_advanced_data_dic):
+    def _run(self, new_user_data_dic, new_advanced_data_dic):
         '''提交修改账户（重写）'''
         if not new_user_data_dic["password"]:   #不输入密码表示不修改密码
             new_user_data_dic.pop("password")
         pprint(new_user_data_dic)
         user_data.update(self.id, new_user_data_dic)
         advanced_data.update(self.id, new_advanced_data_dic)
+        self.submaster.update_info()
+        self.submaster.update_display()
 
 class AccountFrame:
     '''账号启动框架类(存储账号的对象内容)'''
@@ -641,22 +658,19 @@ class AccountFrame:
 
         self.button()   #生成组件
         self.text()
-        self.ping_update()
 
         self.filename = str(self.id+1000)[1:]
         self.path_dic = {
-                         "ini_path" : os.path.join("config", "app_data", self.filename, "MinecraftClient.ini"),
-                         "exe_path" : MCC_PATH,
-                         "log_path" : os.path.join("config", "app_data", self.filename, "listening.log"),
-                         "dir_path" : os.path.join("config", "app_data", self.filename)
-                         }
+                    "ini_path" : os.path.join("config", "app_data", self.filename, "MinecraftClient.ini"),
+                    "exe_path" : MCC_PATH,
+                    "log_path" : os.path.join("config", "app_data", self.filename, "listening.log"),
+                    "dir_path" : os.path.join("config", "app_data", self.filename)
+                    }
 
         self.log = logging.getLogger(f"AccountFrame_{self.id}")
         self.log.setLevel(logging.INFO)
 
-        self.ping_init()
-        self.ping_display()
-        #self.ping_update()
+        self.creat_ping_thread(True)
         
     def start_handler(self):
         '''启动日志'''
@@ -768,13 +782,14 @@ class AccountFrame:
         if not self.working:
             utils.delete_user_file(self.path_dic["dir_path"])
             user_data.delete(self.id)
-            self.master.update_account()
+            advanced_data.delete(self.id)
+            self.master.delete_account(self)
         else:
             print(f"[DEBUG:{FILE_NAME}]进程工作中无法删除！")
 
     def edit(self):
         if not self.working:
-            self.edit_window = EditAccount(self.master, self.id, self.user_data)
+            self.edit_window = EditAccount(self.master, self, self.id, self.user_data)
         else:
             print(f"[DEBUG:{FILE_NAME}]进程工作中无法编辑！")
 
@@ -835,12 +850,30 @@ class AccountFrame:
         
         self.frame.after(10,self.listen_output)
 
-    def update(self):
-        '''刷新组件'''
+    def _clear_widgets(self):
+        '''清除组件'''
         for i in self.frame.winfo_children():
             i.destroy()
+
+    def _clear_frame(self):
+        '''清除框架（用于删除账户）'''
+        self.frame.destroy()
+
+    def _display_widgets(self):
+        '''显示组件'''
         self.button()
         self.text()
+
+    def update_info(self):
+        '''更新账户信息（用于编辑）'''
+        self.user_data = user_data.selete_all(self.id)
+        self.advanced_data = advanced_data.selete_all(self.id)
+
+    def update_display(self):
+        '''刷新组件'''
+        print("已刷新", self.user_data["account"])
+        self._clear_widgets()
+        self._display_widgets()
 
     def restart(self):
         self.restart_count += 1
@@ -876,63 +909,71 @@ class AccountFrame:
         if self.control_window != None and self.control_window.is_alive():
             self.control_window.get_output(text)
 
-    def ping(self):
-        '''连通性测试'''
+    def ping(self, ip, text, init, wait = False):
+        '''连通性测试（init表示是否初始化，wait表示是否为等待其他线程结果）'''
         timeout = 5
-
+        daley = False
+        
         try:
-            self.game_server_daley = ping3.ping(self.user_data["game_server_ip"], timeout=timeout)    #单位：秒
+            if wait:
+                print(f"{ip}已被测试，等待结果中。。")
+                self.master.ip_dic[ip]["thread"].join()
+                daley = self.master.ip_dic[ip]["daley"]
+            else:
+                daley = ping3.ping(ip, timeout=timeout)    #单位：秒
+                self.master.ip_dic[ip]["daley"] = daley
         except Exception as e:
             self.login_server_daley = False
-            print(f"[DEBUG:{FILE_NAME}]{self.user_data["role_name"]}连通性测试失败，报错：{e}")
+            print(f"[DEBUG:{FILE_NAME}]{ip}连通性测试失败，报错：{e}")
 
-        if self.game_server_daley:
-            print(f"[DEBUG:{FILE_NAME}]{self.user_data["role_name"]}游戏服务器延迟（{self.user_data["game_server_ip"]}）：{self.game_server_daley * 1000:.2f}ms")
-            self.game_server_daley_display = str(int(self.game_server_daley * 1000)) + "ms"
-        elif self.game_server_daley == False:
-            print(f"[DEBUG:{FILE_NAME}]{self.user_data["role_name"]}游戏服务器无法连接")
-            self.game_server_daley_display = "未知的主机"
-        elif self.game_server_daley == None:
-            print(f"[DEBUG:{FILE_NAME}]{self.user_data["role_name"]}游戏服务器连接超时")
-            self.game_server_daley_display = "连接超时"
-        
-        if self.user_data["account_type"] == "yggdrasil":
+        if daley:
+            print(f"[DEBUG:{FILE_NAME}]{ip}延迟：{daley * 1000:.2f}ms")
+            daley_display = str(int(daley * 1000)) + "ms"
+        elif daley == False:
+            print(f"[DEBUG:{FILE_NAME}]{ip}无法连接")
+            daley_display = "未知的主机"
+        elif daley == None:
+            print(f"[DEBUG:{FILE_NAME}]{ip}连接超时")
+            daley_display = "连接超时"
 
-            try:
-                self.login_server_daley = ping3.ping(self.user_data["login_server_ip"], timeout=timeout)
-            except Exception as e:
-                self.login_server_daley = False
-                print(f"[DEBUG:{FILE_NAME}]{self.user_data["role_name"]}连通性测试失败，报错：{e}")
+        self.ping_display(text, daley_display)
 
-            if self.login_server_daley:
-                print(f"[DEBUG:{FILE_NAME}]{self.user_data["role_name"]}认证服务器延迟（{self.user_data["login_server_ip"]}）：{self.login_server_daley * 1000:.2f}ms")
-                self.login_server_daley_display = str(int(self.login_server_daley * 1000)) + "ms"
-            elif self.login_server_daley == False:
-                print(f"[DEBUG:{FILE_NAME}]{self.user_data["role_name"]}认证服务器无法连接")
-                self.login_server_daley_display = "未知的主机"
-            elif self.login_server_daley == None:
-                print(f"[DEBUG:{FILE_NAME}]{self.user_data["role_name"]}认证服务器连接超时")
-                self.login_server_daley_display = "连接超时"
-            
-        self.ping_display()
-
-    def ping_display(self):
+    def ping_display(self, text_label, daley_display):
+        '''显示连通性测试结果'''
         try:
-            if self.game_server_ip_text:
-                self.game_server_ip_text.config(text=f"游戏服务器IP：{str(self.user_data["game_server_ip"])} \t延迟：{self.game_server_daley_display}")
-            if self.user_data["account_type"] == "yggdrasil" and self.login_server_ip_text:
-                self.login_server_ip_text.config(text=f"认证服务器IP：{str(self.user_data["login_server_ip"])} \t\t延迟：{self.login_server_daley_display}")
+            if text_label:
+                text_label.config(text=f"{text_label.cget("text").split("\t")[0]}\t延迟：{daley_display}")
+
         except Exception as e:
             print(f"[ERROR:{FILE_NAME}]PING无法显示，报错：{e}")
 
-    def ping_update(self):
-        self.ping_thread = Thread(name=f"{self.user_data["role_name"]}-ping_thread", target=self.ping)  #连通性测试线程
-        self.ping_thread.start()
+    def creat_ping_thread(self, init = False):
+        '''创建连通性测试线程（init为True表示初始化阶段）'''
 
-    def ping_init(self):
-        '''初始化Ping相关变量'''
-        self.game_server_daley_display = "正在连接"
-        self.login_server_daley_display = "正在连接"
+        if init:
+            daley = "正在连接..."
+            self.ping_display(self.game_server_ip_text, daley)
+            if self.user_data["account_type"] == "yggdrasil":
+                self.ping_display(self.login_server_ip_text, daley)
+
+        else:
+            game_server_ip = self.user_data["game_server_ip"]
+            login_server_ip = self.user_data["login_server_ip"]
+
+            if game_server_ip in self.master.ip_dic:
+                game_ping_thread = Thread(name=f"{self.user_data["game_server_ip"]}-ping_thread", target=self.ping, args=(game_server_ip, self.game_server_ip_text, init, True))  
+            else:
+                game_ping_thread = Thread(name=f"{self.user_data["game_server_ip"]}-ping_thread", target=self.ping, args=(game_server_ip, self.game_server_ip_text, init)) 
+                self.master.ip_dic.update({game_server_ip : {"thread" : game_ping_thread, "daley" : False}})    #不存在则加入字典
+            game_ping_thread.start()
+
+            if self.user_data["account_type"] == "yggdrasil":
+                if login_server_ip in self.master.ip_dic:
+                    login_ping_thread = Thread(name=f"{self.user_data["login_server_ip"]}-ping_thread", target=self.ping, args=(login_server_ip, self.login_server_ip_text, init, True))  
+                else:
+                    login_ping_thread = Thread(name=f"{self.user_data["login_server_ip"]}-ping_thread", target=self.ping, args=(login_server_ip, self.login_server_ip_text, init)) 
+                    self.master.ip_dic.update({login_server_ip : {"thread" : login_ping_thread, "daley" : False}})
+                login_ping_thread.start()
 
 class ControlWindow:
     '''控制窗口类'''

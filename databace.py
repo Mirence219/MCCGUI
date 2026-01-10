@@ -72,11 +72,11 @@ class Data:
         return count
 
     def columns(self) -> tuple:
-        '''返回包含所有列标题的元组'''
+        '''返回包含所有列标题的元组（包括id）'''
         return self._columns
 
     def get_all(self):
-        '''返回全部数据（返回的是包含了字典和id的迭代器对象）'''
+        '''返回表全部数据（返回的是包含了字典和id的迭代器对象）'''
         conn = connect(DB_NAME)
         cursor = conn.cursor()
         cursor.execute(f"SELECT * FROM {self.TABLE_NAME}")
@@ -88,20 +88,24 @@ class Data:
             data_id = data_dic.pop("id")                #取出id单独返回
             yield data_id, data_dic
 
-    def add(self, data_dic):
+    def add(self, data_dic, data_id = None):
         '''添加新数据'''
         conn = connect(DB_NAME)
         cursor = conn.cursor()
 
         try:
+            data_dic = data_dic
+            if data_id:
+                data_dic["id"] = data_id
             columns = ",".join(data_dic.keys())
-            placeholders = " , ".join(["?"] * len(data_dic))
+            placeholders = ",".join(["?"] * len(data_dic))
             sql = f"INSERT INTO {self.TABLE_NAME} ({columns}) VALUES ({placeholders})"  #拼接SQL语句
             values = tuple(data_dic.values())                                           #传入的参数
             cursor.execute(sql, values)     #添加数据       
             last_id = cursor.lastrowid      #获取刚刚插入数据的ID
             conn.commit()
             print(f"[DEBUG:{FILE_NAME}]已添加账户（id={last_id}）：{data_dic}")
+            return last_id  #返回id方便后续其他表的创建数据操作
 
         except Exception as e:
             conn.rollback()
@@ -142,7 +146,7 @@ class Data:
             value =  (data_id,)
             cursor.execute(sql, value)  #删除数据
             conn.commit()
-            print(f"[DEBUG:{FILE_NAME}]已删除账户（id={data_id}）")
+            print(f"[DEBUG:{FILE_NAME}]已删除数据（id={data_id}）")
 
         except Exception as e:
             conn.rollback()
