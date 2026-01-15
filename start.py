@@ -96,7 +96,7 @@ class MCC_Process(Process):
             self.get_command_thread = Thread(name=f"{self.name}-get_command_thread", target=self.get_command)    #创建线程接收主进程命令
             self.get_command_thread.start()
 
-            while self.result.poll() == None and not self.force_close:      #循环
+            while self.result.poll() is  None and not self.force_close:      #循环
                 time.sleep(0.5) 
 
             if self.allow_restart:
@@ -107,7 +107,7 @@ class MCC_Process(Process):
                 self.put_command_queue.put("close", False) 
         
         finally: 
-            if self.result != None:
+            if self.result is not None:
                 if self.result.stdin:
                     self.result.stdin.close()
                 if self.result.stdout:
@@ -131,7 +131,7 @@ class MCC_Process(Process):
         '''向MCC输入内容'''
         print(f"[DEBUG:{FILE_NAME}]子线程{self.input_thread.name}（{self.input_thread.ident}）已就绪，准备向MCC输入内容")
 
-        while self.result.poll() == None and not self.close_thread:               #进程执行时循环
+        while self.result.poll() is  None and not self.close_thread:               #进程执行时循环
             if not self.in_queue.empty():               #接受队列的命令
                 send_text = self.in_queue.get(False)
                 print(f"[DEBUG:{FILE_NAME}]子进程{self.name}（{self.pid}）接收到命令\"{send_text}\"")
@@ -144,7 +144,7 @@ class MCC_Process(Process):
         '''监听子进程输出'''
         print(f"[DEBUG:{FILE_NAME}]子线程{self.listening_thread.name}（{self.listening_thread.ident}）已就绪，开始监听MCC进程的输出")
 
-        while self.result.poll() == None and not self.close_thread:
+        while self.result.poll() is  None and not self.close_thread:
             for text in self.result.stdout: #获取MCC输出
                 allow_output = True
                 ansi_text = text.strip()    
@@ -215,7 +215,7 @@ class MCC_Process(Process):
     def get_state(self):
         print(f"[DEBUG:{FILE_NAME}]子线程{self.state_thread.name}（{self.state_thread.ident}）已就绪，获取假人{self.name}状态")
 
-        while self.result.poll() == None and not self.close_thread:
+        while self.result.poll() is  None and not self.close_thread:
             if self.connect:
                 self.result.stdin.write("/health" + "\n")
                 self.result.stdin.flush()
@@ -239,7 +239,7 @@ class MCC_Process(Process):
 
     def close_MCC(self):
         '''强制关闭子进程和MCC'''
-        if self.result != None:
+        if self.result is not None:
             self.result.terminate()
             self.result.wait()
             print(f"[DEBUG:{FILE_NAME}]交互子进程（{self.pid}）和MCC子进程（{self.result.pid}）已终止")

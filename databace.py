@@ -4,6 +4,7 @@
 
 from sqlite3 import *
 import os
+from typing import final
 
 #代码文件名
 FILE_NAME = os.path.basename(__file__) 
@@ -54,9 +55,9 @@ class Data:
             try:
                 for col in missing_columns:
                     cursor.execute(f"ALTER TABLE {self.TABLE_NAME} ADD COLUMN {col}")    #添加缺失字段
-                    print(f"[DEBUG:{FILE_NAME}]已添加字段'{col}'")
+                    print(f"[DEBUG:{FILE_NAME}]表{self.TABLE_NAME}已添加字段'{col}'")
             except Exception as e:
-                print(f"[ERROR{FILE_NAME}]添加失败，报错：{e}'")
+                print(f"[ERROR{FILE_NAME}]表{self.TABLE_NAME}添加失败，报错：{e}'")
         else:
             print(f"[DEBUG:{FILE_NAME}]表{self.TABLE_NAME}字段完整，无需更新")
 
@@ -104,12 +105,24 @@ class Data:
             cursor.execute(sql, values)     #添加数据       
             last_id = cursor.lastrowid      #获取刚刚插入数据的ID
             conn.commit()
-            print(f"[DEBUG:{FILE_NAME}]已添加账户（id={last_id}）：{data_dic}")
+            print(f"[DEBUG:{FILE_NAME}]表{self.TABLE_NAME}已添加账户（id={last_id}）：{data_dic}")
             return last_id  #返回id方便后续其他表的创建数据操作
+
+        except IntegrityError as e:
+            '''SQLite报错'''
+            error_msg = str(e)
+            field = error_msg.strip().split(".")[-1]
+            if "NOT NULL constraint failed" in error_msg:
+                print(f"[WARNING:{FILE_NAME}]表{self.TABLE_NAME}添加失败，字段{field}不能为NULL")
+            elif "UNIQUE constraint failed" in error_msg:
+                print(f"[WARNING:{FILE_NAME}]表{self.TABLE_NAME}添加失败，字段{field}不能重复")
+            else: 
+                print(f"[ERROR:{FILE_NAME}]表{self.TABLE_NAME}添加失败，报错：{e}")
+            return {"error" : e, "error_msg" : error_msg}
 
         except Exception as e:
             conn.rollback()
-            print(f"[ERROR{FILE_NAME}]添加失败，报错：{e}")
+            print(f"[ERROR:{FILE_NAME}]表{self.TABLE_NAME}添加失败，报错：{e}")
 
         finally:
             cursor.close()
@@ -126,11 +139,11 @@ class Data:
             values = list(data_dic.values())+ [data_id]                             
             cursor.execute(sql, values)     #修改数据
             conn.commit()
-            print(f"[DEBUG:{FILE_NAME}]已修改账户（id={data_id}）为：{data_dic}")
+            print(f"[DEBUG:{FILE_NAME}]表{self.TABLE_NAME}已修改（id={data_id}）为：{data_dic}")
 
         except Exception as e:
             conn.rollback()
-            print(f"[ERROR{FILE_NAME}]修改账户{self.TABLE_NAME} id = {data_id}失败，报错：{e}")
+            print(f"[ERROR{FILE_NAME}]表{self.TABLE_NAME}修改（id = {data_id}）失败，报错：{e}")
 
         finally:
             cursor.close()
@@ -146,11 +159,11 @@ class Data:
             value =  (data_id,)
             cursor.execute(sql, value)  #删除数据
             conn.commit()
-            print(f"[DEBUG:{FILE_NAME}]已删除数据（id={data_id}）")
+            print(f"[DEBUG:{FILE_NAME}]表{self.TABLE_NAME}已删除（id={data_id}）数据")
 
         except Exception as e:
             conn.rollback()
-            print(f"[ERROR{FILE_NAME}]删除{self.TABLE_NAME} id = {data_id}失败，报错：{e}")
+            print(f"[ERROR{FILE_NAME}]表{self.TABLE_NAME}删除（id = {data_id}）数据失败，报错：{e}")
 
         finally:
             cursor.close()
@@ -172,8 +185,22 @@ class Data:
             return data_dic
 
         except Exception as e:
-            print(f"[ERROR{FILE_NAME}]查询{self.TABLE_NAME} id = {data_id}失败，报错：{e}")
+            print(f"[ERROR{FILE_NAME}]表{self.TABLE_NAME}查询（id = {data_id}）失败，报错：{e}")
 
+        finally:
+            cursor.close()
+            conn.close()
+
+    def reset_table(self):
+        '''重置表，方便测试'''
+        conn = connect(DB_NAME)
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute(f"DROP TABLE IF EXISTS {self.TABLE_NAME}")
+            self._create(conn, cursor)
+            print(f"[DEBUG:{FILE_NAME}]表{self.TABLE_NAME}已重置。")
+        
         finally:
             cursor.close()
             conn.close()
@@ -189,7 +216,7 @@ class TestData(Data):
     #表列标题
     TABLE_COLUMNS = (
         "id INTEGER PRIMARY KEY",                                                            
-        "account TEXT",                                                                       
+        "account TEXT UNIQUE",                                                                       
         "password BLOB",                                                                      
         "game_server_ip TEXT",                                                               
         "game_server_port INTEGER",                                                          
@@ -218,9 +245,6 @@ class UserData(Data):
         "role_name TEXT",                                                                     # 角色名称（用于认证服务器多角色登录）
         "account_type TEXT CHECK (account_type IN ('microsoft', 'yggdrasil', 'offline'))",     # 帐户类型：mojang/microsoft/yggdrasil
     ]
-
-
-
 
 class AdvancedData(Data):
     '''高级设置项类'''
@@ -268,8 +292,28 @@ class AdvancedData(Data):
         "min_terminal_height INTEGER",                                                        # 终端最小高度限制
         "ignore_invalid_player_name INTEGER CHECK (ignore_invalid_player_name IN (0, 1))"     # 忽略非标准玩家名（0=严格检查，1=允许）
         ]
-    
 
+class ShortcutCmdData(Data):
+    '''快捷指令表类'''
+    #表名
+    TABLE_NAME = "shortcut_cmd"
+
+    #表列标题
+    TABLE_COLUMNS = [
+        "id INTEGER PRIMARY KEY",           
+        "cmd_name TEXT NOT NULL UNIQUE",    #快捷指令名称
+        "cmd_content TEXT NOT NULL",        #快捷指令内容
+        "cmd_type TEXT CHECK (cmd_type IN ('simple', 'complex'))"   #快捷指令解析方式（简单、复杂）
+    ]
 
 user_data = UserData()
 advanced_data = AdvancedData()
+shortcut_cmd_data = ShortcutCmdData()
+
+
+if __name__ == "__main__":
+    '''用于测试'''
+    test_data = TestData()
+    test_data.reset_table()
+    test_data.add({"account" : "1"})
+    test_data.add({"account" : "1"})

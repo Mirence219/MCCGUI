@@ -118,13 +118,15 @@ class MCC_GUI():
         print(f"[DEBUG:{FILE_NAME}]用户关闭主窗口，主进程以及所有子进程都将将强制关闭！")
         self.window.destroy()
         for account in self.accounts:
-            if account.exe != None:
+            if account.exe is not None:
                 account.close_MCC()
         sys.exit(0)
 
     def update_ping(self):
         '''对账户列表内的服务器IP进行连通性测试'''
         self.ip_dic = {}      #字典，保证IP不重复
+        for account in self.accounts:
+            account.creat_ping_thread(True) 
         for account in self.accounts:
             account.creat_ping_thread() 
 
@@ -669,8 +671,6 @@ class AccountFrame:
 
         self.log = logging.getLogger(f"AccountFrame_{self.id}")
         self.log.setLevel(logging.INFO)
-
-        self.creat_ping_thread(True)
         
     def start_handler(self):
         '''启动日志'''
@@ -706,7 +706,7 @@ class AccountFrame:
         self.put_command_queue = Queue()    #发送自定义命令
         self.state_queue = Queue()          #假人状态接收
 
-        if self.control_window != None:     #向控制窗口同步新的通信队列
+        if self.control_window is not None:     #向控制窗口同步新的通信队列
             self.control_window.in_queue = self.in_queue
             self.control_window.out_queue = self.out_queue
             self.control_window.state_queue = self.state_queue
@@ -750,7 +750,7 @@ class AccountFrame:
             self.start_handler()
             self.start_button.config(text="退出")
             set_toml.set_data(self.user_data, self.advanced_data, self.path_dic["ini_path"])
-            if self.exe != None and self.exe.is_alive():
+            if self.exe is not None and self.exe.is_alive():
                 print(f"[DEBUG:{FILE_NAME}]上一个相同子进程（{self.exe.pid}）未结束，将强制终止")
                 self.close_MCC()
             self.set_queue()
@@ -758,7 +758,7 @@ class AccountFrame:
             self.window_print("[MCCGUI] 首次启动伊始默认不允许重连", self.log)
             self.working = True
             self.exe.start()
-            if self.control_window != None and self.control_window.is_alive():
+            if self.control_window is not None and self.control_window.is_alive():
                 self.control_window.start_button.config(text="退出")
                 self.control_window.reco_button.config(state=NORMAL)
         else:
@@ -772,7 +772,7 @@ class AccountFrame:
         self.working = False
         self.window_print("[MCCGUI] 正在退出。。。", self.log)
         self.close_handler()
-        if self.control_window != None and self.control_window.is_alive():
+        if self.control_window is not None and self.control_window.is_alive():
             self.control_window.start_button.config(text="启动")
             self.control_window.reco_button.config(state=DISABLED)
             self.control_window.state_dic.update(self.control_window.default_state_dic)
@@ -795,10 +795,9 @@ class AccountFrame:
 
     def control(self):
         '''打开控制窗口'''
-        if self.control_window != None and self.control_window.is_alive():
+        if self.control_window is not None and self.control_window.is_alive():
             self.control_window.display()
         else:
-            self.control_window = None
             self.control_window = ControlWindow(self.master, self, self.in_queue, self.out_queue, self.state_queue, self.path_dic["log_path"])
 
     def listen_command(self):
@@ -845,7 +844,7 @@ class AccountFrame:
         if not self.out_queue.empty():
             output = self.out_queue.get(False)
             self.log.info(output)   #写入日志
-            if self.control_window != None and self.control_window.is_alive():
+            if self.control_window is not None and self.control_window.is_alive():
                 self.control_window.get_output(output)
         
         self.frame.after(10,self.listen_output)
@@ -883,7 +882,7 @@ class AccountFrame:
         self.creat_process(True)
         self.window_print(f"[MCCGUI] 正在尝试重连。。。{self.restart_count}/{self.max_restart_count}", self.log)
         self.exe.start()
-        if self.control_window != None and self.control_window.is_alive():
+        if self.control_window is not None and self.control_window.is_alive():
             self.control_window.state_dic.update(self.control_window.default_state_dic)
             self.control_window.update_state()
 
@@ -906,7 +905,7 @@ class AccountFrame:
     def window_print(self, text, log = None):
         '''输出内容到输出流、日志（如果有）和监听窗口'''
         MCCGUI_print(text, log)
-        if self.control_window != None and self.control_window.is_alive():
+        if self.control_window is not None and self.control_window.is_alive():
             self.control_window.get_output(text)
 
     def ping(self, ip, text, init, wait = False):
@@ -932,7 +931,7 @@ class AccountFrame:
         elif daley == False:
             print(f"[DEBUG:{FILE_NAME}]{ip}无法连接")
             daley_display = "未知的主机"
-        elif daley == None:
+        elif daley is  None:
             print(f"[DEBUG:{FILE_NAME}]{ip}连接超时")
             daley_display = "连接超时"
 
@@ -1140,7 +1139,7 @@ class ControlWindow:
 
     def update_state(self):
         '''更新假人状态显示'''
-        self.bot_alive_text.config(text=f"存活状态：{"未知" if self.state_dic["alive"] == None else("存活" if self.state_dic["alive"] else "死亡")}")
+        self.bot_alive_text.config(text=f"存活状态：{"未知" if self.state_dic["alive"] is  None else("存活" if self.state_dic["alive"] else "死亡")}")
         self.bot_health_text.config(text=f"生命值：{self.state_dic["health"]}")
         self.bot_saturation_text.config(text=f"饥饿值：{self.state_dic["saturation"]}")
         self.bot_level_text.config(text=f"经验等级：{self.state_dic["level"]}")

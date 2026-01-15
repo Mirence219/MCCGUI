@@ -34,7 +34,7 @@ def delete_user_file(path):
 def MCCGUI_print(text, log = None):
     '''同时输出到输出流和日志(如果有的话)'''
     print(text)
-    if log != None:
+    if log is not None:
         log.info(text)
 
 
