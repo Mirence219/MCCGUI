@@ -145,6 +145,27 @@ class MCC_GUI():
 
 class AddAccount:
     '''添加账户窗口类'''
+
+    #语言包选项
+    LANGUAGE_OPTIONS =(
+        "af_za", "ar_sa", "ast_es", "az_az", "ba_ru", "bar", "be_by", "bg_bg",
+        "br_fr", "brb", "bs_ba", "ca_es", "cs_cz", "cy_gb", "da_dk", "de_at",
+        "de_ch", "de_de", "el_gr", "en_au", "en_ca", "en_gb", "en_nz", "en_pt",
+        "en_ud", "en_us", "enp", "enws", "eo_uy", "es_ar", "es_cl", "es_ec",
+        "es_es", "es_mx", "es_uy", "es_ve", "esan", "et_ee", "eu_es", "fa_ir",
+        "fi_fi", "fil_ph", "fo_fo", "fr_ca", "fr_fr", "fra_de", "fur_it", "fy_nl",
+        "ga_ie", "gd_gb", "gl_es", "haw_us", "he_il", "hi_in", "hr_hr", "hu_hu",
+        "hy_am", "id_id", "ig_ng", "io_en", "is_is", "isv", "it_it", "ja_jp",
+        "jbo_en", "ka_ge", "kk_kz", "kn_in", "ko_kr", "ksh", "kw_gb", "la_la",
+        "lb_lu", "li_li", "lmo", "lol_us", "lt_lt", "lv_lv", "lzh", "mk_mk",
+        "mn_mn", "ms_my", "mt_mt", "nah", "nds_de", "nl_be", "nl_nl", "nn_no",
+        "no_no", "oc_fr", "ovd", "pl_pl", "pt_br", "pt_pt", "qya_aa", "ro_ro",
+        "rpr", "ru_ru", "ry_ua", "se_no", "sk_sk", "sl_si", "so_so", "sq_al",
+        "sr_sp", "sv_se", "sxu", "szl", "ta_in", "th_th", "tl_ph", "tlh_aa",
+        "tok", "tr_tr", "tt_ru", "uk_ua", "val_es", "vec_it", "vi_vn", "yi_de",
+        "yo_ng", "zh_cn", "zh_hk", "zh_tw", "zlm_arab"
+    )
+
     def __init__(self, master):
         self.window = Toplevel(master.window)
         self.window.title("添加账户")
@@ -325,26 +346,6 @@ class AddAccount:
         self.advanced_frame.bind("<Configure>", lambda e: self.advanced_canvas.configure(scrollregion=self.advanced_canvas.bbox("all")))
         self.advanced_canvas.create_window((0, 0), window=self.advanced_frame, anchor = NW)
         self.advanced_canvas.configure(yscrollcommand=self.advanced_scrollbar.set)
-
-        #语言包选项
-        language_opions =(
-            "af_za", "ar_sa", "ast_es", "az_az", "ba_ru", "bar", "be_by", "bg_bg",
-            "br_fr", "brb", "bs_ba", "ca_es", "cs_cz", "cy_gb", "da_dk", "de_at",
-            "de_ch", "de_de", "el_gr", "en_au", "en_ca", "en_gb", "en_nz", "en_pt",
-            "en_ud", "en_us", "enp", "enws", "eo_uy", "es_ar", "es_cl", "es_ec",
-            "es_es", "es_mx", "es_uy", "es_ve", "esan", "et_ee", "eu_es", "fa_ir",
-            "fi_fi", "fil_ph", "fo_fo", "fr_ca", "fr_fr", "fra_de", "fur_it", "fy_nl",
-            "ga_ie", "gd_gb", "gl_es", "haw_us", "he_il", "hi_in", "hr_hr", "hu_hu",
-            "hy_am", "id_id", "ig_ng", "io_en", "is_is", "isv", "it_it", "ja_jp",
-            "jbo_en", "ka_ge", "kk_kz", "kn_in", "ko_kr", "ksh", "kw_gb", "la_la",
-            "lb_lu", "li_li", "lmo", "lol_us", "lt_lt", "lv_lv", "lzh", "mk_mk",
-            "mn_mn", "ms_my", "mt_mt", "nah", "nds_de", "nl_be", "nl_nl", "nn_no",
-            "no_no", "oc_fr", "ovd", "pl_pl", "pt_br", "pt_pt", "qya_aa", "ro_ro",
-            "rpr", "ru_ru", "ry_ua", "se_no", "sk_sk", "sl_si", "so_so", "sq_al",
-            "sr_sp", "sv_se", "sxu", "szl", "ta_in", "th_th", "tl_ph", "tlh_aa",
-            "tok", "tr_tr", "tt_ru", "uk_ua", "val_es", "vec_it", "vi_vn", "yi_de",
-            "yo_ng", "zh_cn", "zh_hk", "zh_tw", "zlm_arab"
-        )
                 
 
         self.advanced_widget_columns_count = 2       #列数
@@ -388,7 +389,7 @@ class AddAccount:
 
         #枚举选项
         combobox_items = [
-            ("language", "语言包", language_opions, None, "zh_cn"),
+            ("language", "语言包", self.LANGUAGE_OPTIONS, None, "zh_cn"),
             #("internal_cmd_char", "内部命令前缀", ('none', 'slash', 'backslash'), "slash"),  
             ("enable_forge", "Forge支持", ('auto', 'no', 'force'), ('自动', '关闭', '开启'),"auto"),  
             ("brand_info", "客户端标识", ('mcc', 'vanilla', 'empty'), ('MCC', '原版', '无'), "mcc"),
