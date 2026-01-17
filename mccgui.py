@@ -25,6 +25,7 @@ from utils import *
 from display_text import display_text
 import utils
 from encryptor import encrypt
+from shortcut_commands import *
 
 #代码文件名
 FILE_NAME = os.path.basename(__file__)
@@ -65,6 +66,7 @@ class MCC_GUI():
         self.canvas.configure(yscrollcommand=self.scro.set)
 
         self.accounts_init = False
+        self.shortcut_cmd_window = None
 
         self.button()
         self.show_accounts()
@@ -79,6 +81,8 @@ class MCC_GUI():
         self.add_account_button.pack(side=LEFT, ipadx=5, ipady=2, pady=5)
         self.update_ping_button = Button(self.control_frame, text="刷新", command=self.update_ping)
         self.update_ping_button.pack(side=RIGHT, pady=5)
+        self.shortcut_cmd_button = Button(self.control_frame, text="快捷指令管理", command=self._on_shortcut_cmd_button)
+        self.shortcut_cmd_button.pack(side=LEFT, ipadx=5, ipady=2, pady=5)
 
     def open_add_account_window(self):
         '''打开添加账户窗口'''
@@ -142,6 +146,14 @@ class MCC_GUI():
         account._clear_frame()
         self.accounts.remove(account)
         self._update_display()
+
+    def _on_shortcut_cmd_button(self, master = None):
+        '''打开快捷指令管理窗口'''
+        if self.shortcut_cmd_window is not None and self.shortcut_cmd_window.is_alive():
+            self.shortcut_cmd_window.display()
+        else:
+            self.shortcut_cmd_window = ShortcutCommandsGUI(master if master is not None else self)
+
 
 class AddAccount:
     '''添加账户窗口类'''
@@ -980,7 +992,7 @@ class ControlWindow:
     def __init__(self, master, submaster, in_queue, out_queue, state_queue, log_path):
         self.window = Toplevel(master.window)
         self.window.title("发送消息或命令")
-        self.WIDTH = 600
+        self.WIDTH = 700
         self.HEIGHT = 400
         self.window.geometry(f"{self.WIDTH}x{self.HEIGHT}+{master.window.winfo_x() +(master.window.winfo_width()-self.WIDTH)//2}+{master.window.winfo_y()+(master.window.winfo_height()-self.HEIGHT)//2}")  #窗口居中显示
         self.window.resizable(False,False)
@@ -1019,10 +1031,14 @@ class ControlWindow:
         '''生成框架'''
         self.io_frame = Frame(self.window) #输入/输出框架
         self.io_frame.pack(side="left", padx=5)
-        self.control_frame = LabelFrame(self.window, text="控制功能", labelanchor="n") #控制功能框架
-        self.control_frame.pack(anchor=NE, fill=BOTH, padx=(0,3), pady=3)
-        self.bot_state_frame = LabelFrame(self.window, text="账户状态", labelanchor="n") #假人状态框架
-        self.bot_state_frame.pack(anchor=SE, fill=BOTH, padx=(0,3), pady=3)
+        self.center_frame = Frame(self.window)  #中间一列框架
+        self.center_frame.pack(side=LEFT, fill=BOTH)
+        self.control_frame = LabelFrame(self.center_frame, text="控制功能", labelanchor="n") #控制功能框架
+        self.control_frame.pack(anchor=N, fill=BOTH, padx=(0,3), pady=3)
+        self.bot_state_frame = LabelFrame(self.center_frame, text="账户状态", labelanchor="n") #假人状态框架
+        self.bot_state_frame.pack(anchor=N, fill=BOTH, padx=(0,3), pady=3)
+        self.shortcut_cmd_frame = LabelFrame(self.window, text="快捷指令", labelanchor="n") #快捷指令框架
+        self.shortcut_cmd_frame.pack(anchor=E, side=LEFT, fill=BOTH, padx=(0, 3), pady=(3, 50))
 
     def label(self):
         '''生成标签'''
@@ -1084,6 +1100,9 @@ class ControlWindow:
         if self.state_dic["alive"]:
             self.respawn_button.config(state=NORMAL)
         self.respwan_button.pack(fill=X, ipadx=30, padx=3, pady=(3,6))
+
+        self.shortcut_cmd_center_button = Button(self.shortcut_cmd_frame, text="快捷指令管理", command=lambda: self.master._on_shortcut_cmd_button(self))
+        self.shortcut_cmd_center_button.pack(fill=X, ipadx=30, padx=3, pady=3)
 
     def bind(self):
         '''事件绑定'''

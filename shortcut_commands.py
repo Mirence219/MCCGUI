@@ -4,6 +4,7 @@ from tkinter.scrolledtext import ScrolledText
 from unittest import enterModuleContext
 
 from databace import shortcut_cmd_data
+from __version__ import MangoCraft
 
 #代码文件名
 FILE_NAME = os.path.basename(__file__)
@@ -19,9 +20,12 @@ class ShortcutCommandsGUI:
         self.HEIGHT = 350
         self._init_window()
         self._init_widgets()
-        self._display()
+        self._display_widgets()
 
         self.add_cmd_window = None
+
+    def is_alive(self):
+        return self.window.winfo_exists()
 
     def _init_window(self):
         '''初始化窗口'''
@@ -46,43 +50,48 @@ class ShortcutCommandsGUI:
 
         self.add_cmd_button = Button(self.control_frame, text="添加快捷指令", command=self._on_add_cmd_button)
         
-        self.short_cmd_list = []
+        self.shortcut_cmd_list = []
         for cmd_id, cmd_data in shortcut_cmd_data.get_all():
-            self.short_cmd_list.append(ShortCmdFrame(cmd_data, cmd_id, self))
+            self.shortcut_cmd_list.append(ShortCmdFrame(cmd_data, cmd_id, self))
             
     def _on_add_cmd_button(self):
         '''打开添加账户窗口'''
         self.add_cmd_window = AddCmdWindow(self)
 
-
-    def _display(self):
-        '''显示窗口'''
+    def _display_widgets(self):
+        '''显示控件'''
         self.control_frame.pack(pady=(5,0))
         self.cmds_frame.pack(fill=BOTH)
 
         self.add_cmd_button.pack()
         
-        for cmd in self.short_cmd_list:
+        for cmd in self.shortcut_cmd_list:
             cmd.display()
+
+    def display(self):
+        '''弹出窗口'''
+        self.window.deiconify()
+        self.window.lift()
+        self.window.focus_force()
 
     def _update_cmd_frame(self):
         '''更新快捷指令框架内容（涉及删除）'''
-        for cmd in self.short_cmd_list:
+        for cmd in self.shortcut_cmd_list:
             cmd.undisplay()
-        for cmd in self.short_cmd_list:
+        for cmd in self.shortcut_cmd_list:
             cmd.display()
 
     def delete_cmd(self, cmd):
         '''删除快捷指令'''
         shortcut_cmd_backend.delete_cmd(cmd.id)
         cmd.clear_frame()
-        self.short_cmd_list.remove(cmd)
+        self.shortcut_cmd_list.remove(cmd)
         self._update_cmd_frame()
 
     def add_cmd(self, cmd_id, cmd_data):
         '''添加快捷指令并更新界面'''
-        self.short_cmd_list.append(ShortCmdFrame(cmd_data, cmd_id, self))
-        self.short_cmd_list[-1].display()
+        self.shortcut_cmd_list.append(ShortCmdFrame(cmd_data, cmd_id, self))
+        self.shortcut_cmd_list[-1].display()
 
 
 
@@ -91,7 +100,9 @@ class ShortCmdFrame:
     def __init__(self, cmd_data, cmd_id, master):
         self.cmd_list = cmd_data["cmd_content"].splitlines()
         self.cmd_name = cmd_data["cmd_name"]
+        self.cmd_description = cmd_data["cmd_description"]
         self.cmd_type = cmd_data["cmd_type"]
+        self.cmd_enable_delete = bool(cmd_data["enable_delete"])
         self.id = cmd_id
         self.master = master
         self.frame = LabelFrame(master.cmds_frame)
@@ -102,10 +113,12 @@ class ShortCmdFrame:
         self.text_frame = Frame(self.frame)
         self.button_frame = Frame(self.frame)
 
-        self.cmd_name_text = Label(self.text_frame, text=f"{"简单" if self.cmd_type == "simple" else "复杂"}快捷指令：{self.cmd_name}")
+        self.cmd_name_text = Label(self.text_frame, text=f"{"简单" if self.cmd_type == "simple" else "复杂"}快捷指令：{self.cmd_name} {self.cmd_description}")
 
         self.edit_button = Button(self.button_frame, text="编辑", command=self._on_edit_cmd)
         self.delete_button = Button(self.button_frame, text="删除", command=self._on_delete_cmd)
+        if not self.cmd_enable_delete:
+            self.delete_button.config(state=DISABLED)
 
     def display(self):
         '''显示组件（外部）'''
@@ -137,8 +150,9 @@ class ShortCmdFrame:
         if new_cmd_data is not None:
             self.cmd_list = new_cmd_data["cmd_content"].splitlines()
             self.cmd_name = new_cmd_data["cmd_name"]
+            self.cmd_description = new_cmd_data["cmd_description"]
             self.cmd_type = new_cmd_data["cmd_type"]
-            self.cmd_name_text.config(text=f"{"简单" if self.cmd_type == "simple" else "复杂"}快捷指令：{self.cmd_name}")
+            self.cmd_name_text.config(text=f"{"简单" if self.cmd_type == "simple" else "复杂"}快捷指令：{self.cmd_name} {self.cmd_description}")
         self._display()
 
     def clear(self):
@@ -165,7 +179,7 @@ class AddCmdWindow:
     def __init__(self, master):
         self.master = master
         self.WIDTH = 350
-        self.HEIGHT = 300
+        self.HEIGHT = 330
 
         self._init_window()
         self._init_widgets()
@@ -184,10 +198,11 @@ class AddCmdWindow:
 
     def _init_widgets(self):
         '''初始化控件'''
-        self.type_frame = Frame(self.window)    #类型选择框架
-        self.name_frame = Frame(self.window)    #快捷指令名称框架
-        self.cmd_frame = Frame(self.window)     #快捷指令内容框架
-        self.save_frame = Frame(self.window)    #保存框架
+        self.type_frame = Frame(self.window)        #类型选择框架
+        self.name_frame = Frame(self.window)        #快捷指令名称框架
+        self.description_frame = Frame(self.window) #快捷指令描述框架
+        self.cmd_frame = Frame(self.window)         #快捷指令内容框架
+        self.save_frame = Frame(self.window)        #保存框架
 
         self.type_text = Label(self.type_frame, text="快捷指令类型：")
         self.type_single_var = StringVar()
@@ -197,6 +212,9 @@ class AddCmdWindow:
 
         self.name_text = Label(self.name_frame, text="快捷指令名称：")
         self.name_entry = Entry(self.name_frame)
+
+        self.description_text = Label(self.description_frame, text="描述")
+        self.description_entry = Entry(self.description_frame)
 
         self.cmd_text = Label(self.cmd_frame, text="快捷指令内容（换行以输入多条指令）：")
         self.cmd_scrolltext = ScrolledText(self.cmd_frame, height=8)
@@ -209,6 +227,7 @@ class AddCmdWindow:
         '''显示控件'''
         self.type_frame.pack(fill=X, padx=10, pady=5)
         self.name_frame.pack(fill=X, padx=(10, 25), pady=5)
+        self.description_frame.pack(fill=X, padx=(10, 25), pady=5)
         self.cmd_frame.pack(fill=BOTH, padx=10, pady=5)
         self.save_frame.pack(fill=X, padx=10, pady=10)
 
@@ -219,8 +238,11 @@ class AddCmdWindow:
         self.name_text.pack(side=LEFT, padx=5)
         self.name_entry.pack(side=LEFT, fill=X, expand=True, padx=5)
 
+        self.description_text.pack(side=TOP, anchor=NW)
+        self.description_entry.pack(side=TOP, fill=BOTH, padx=5)
+
         self.cmd_text.pack(anchor=NW, padx=5)
-        self.cmd_scrolltext.pack(side=LEFT, fill=BOTH, expand=True, padx=5)
+        self.cmd_scrolltext.pack( fill=BOTH, padx=5)
 
         self.save_button.pack()
         self.warning_text.pack(pady=5)
@@ -229,6 +251,7 @@ class AddCmdWindow:
         '''获取输入内容，校验并保存'''
         cmd_type = self.type_single_var.get()
         cmd_name = self.name_entry.get().strip()
+        cmd_description = self.description_entry.get().strip()
         cmd_content = self.cmd_scrolltext.get("1.0", END).strip()
 
         #输入校验
@@ -239,6 +262,7 @@ class AddCmdWindow:
         cmd_data = {
             "cmd_type" : cmd_type,
             "cmd_name" : cmd_name,
+            "cmd_description" : cmd_description,
             "cmd_content" : cmd_content,
             }
 
@@ -255,7 +279,7 @@ class AddCmdWindow:
             self.warning_text.config(text="快捷指令内容不能为空！")
             result = False
         
-        for cmd in self.master.short_cmd_list:  #重复校验
+        for cmd in self.master.shortcut_cmd_list:  #重复校验
             if cmd_name == cmd.cmd_name:
                 self.warning_text.config(text="快捷指令名称不能重复！")
                 result = False
@@ -277,6 +301,7 @@ class EditCmdWindow(AddCmdWindow):
         self.cmd_type = cmd_data["cmd_type"]
         self.cmd_content = cmd_data["cmd_content"]
         self.cmd_name = cmd_data["cmd_name"]
+        self.cmd_description = cmd_data["cmd_description"]
         super().__init__(master)
 
     def _init_window(self):
@@ -289,6 +314,7 @@ class EditCmdWindow(AddCmdWindow):
         self.save_button.config(text="保存快捷指令")
 
         self.name_entry.insert(0, self.cmd_name)
+        self.description_entry.insert(0, self.cmd_description)
         self.cmd_scrolltext.insert("1.0", self.cmd_content)
 
     def _display(self):
@@ -315,7 +341,7 @@ class EditCmdWindow(AddCmdWindow):
             self.warning_text.config(text="快捷指令内容不能为空！")
             result = False
         
-        for cmd in self.master.short_cmd_list:  #重复校验（不包括自己）
+        for cmd in self.master.shortcut_cmd_list:  #重复校验（不包括自己）
             if cmd_name == cmd.cmd_name and self.submaster != cmd:
                 self.warning_text.config(text="快捷指令名称不能重复！")
                 result = False
@@ -344,6 +370,7 @@ class ShortcutCommandsBackend:
 
     def add_cmd(self, cmd_data) -> int:
         '''新增快捷指令（返回cmd_id）'''
+        cmd_data["enable_delete"] = True
         cmd_id = shortcut_cmd_data.add(cmd_data)
         return cmd_id
 
@@ -372,5 +399,41 @@ if __name__ == "__main__":
 
 else:
     shortcut_cmd_backend = ShortcutCommandsBackend()
-    shortcut_cmd_window = ShortcutCommandsGUI(shortcut_cmd_backend)
+    shortcut_cmd_data.reset_table()    #清空快捷指令（测试用）
+    
+        
+    if MangoCraft:
+        #芒果方块粉丝服常用命令
+        mangocraft_cmd_list = (
+            # 传送类
+            ("/back", "返回上一次传送地点或死亡点", "/back", "simple"),
+            ("/tpa", "请求传送至指定玩家位置", "/tpa <玩家名称>", "complex"),
+            ("/tpahere", "请求指定玩家传送至自己的位置", "/tpahere <玩家名称>", "complex"),
+            ("/tpaccept", "接受他人的传送请求", "/tpaccept", "simple"),
+            ("/tpcancel", "拒绝他人的传送请求", "/tpcancel", "simple"),
+            ("/home", "传送至家", "/home <家名称>", "complex"),
+            ("/sethome", "添加当前位置为家", "/sethome <新家名称>", "complex"),
+            ("/delhome", "删除已有的家", "/delhome <家名称>", "complex"),
+            ("/spawn", "传送至主城", "/spawn", "simple"),
+            ("/warp", "传送至地标", "/warp <地标名称>", "complex"),
 
+            # 无冷却传送类（适合假人）
+            ("/eback", "返回上一次传送地点", "/eback", "simple"),
+            ("/etpa", "请求传送至指定玩家位置", "/etpa <玩家名称>", "complex"),
+            ("/etpahere", "请求指定玩家传送至自己位置", "/etpahere <玩家名称>", "complex"),
+            ("/etpaccept", "接受他人的传送请求", "/etpaccept", "simple"),
+            ("/etpcancel", "拒绝他人的传送请求", "/etpcancel", "simple"),
+            ("/etpauto", "启用/关闭自动接受传送请求", "/etpauto", "simple"),
+            ("/ehomes", "传送至家", "/ehomes <家名称>", "complex"),
+            ("/esethome", "添加当前位置为家", "/esethome <新家名称>", "complex"),
+            ("/edelhome", "删除已有的家", "/edelhome <家名称>", "complex"),
+        )
+
+        for cmd_data in mangocraft_cmd_list:
+            cmd_dic = dict(zip(("cmd_name", "cmd_description", "cmd_content", "cmd_type"), cmd_data))
+            cmd_dic["enable_delete"] = False
+            cmd_id = shortcut_cmd_data.add(cmd_dic)
+            if not isinstance(cmd_id, dict):
+                print(f"[DEBUG:{FILE_NAME}]已添加快捷指令(cmd_id={cmd_id})：{cmd_data[1]}")
+        for id, data in shortcut_cmd_data.get_all():
+            print(data)

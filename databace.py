@@ -33,13 +33,22 @@ class Data:
         cursor.close()
         conn.close()
 
+    def _check_table(self, conn, cursor) -> bool:
+        '''检查表是否存在'''
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (self.TABLE_NAME,))
+        return cursor.fetchone() is not None
+
     def _create(self, conn, cursor):
         '''创建表（内部）'''
         try:
+            if self._check_table(conn, cursor):
+                print(f"[DEBUG:{FILE_NAME}]表{self.TABLE_NAME}已存在")
+                return
+
             cursor.execute(f"CREATE TABLE {self.TABLE_NAME}({",".join(self.TABLE_COLUMNS)})")
+            conn.commit()
             print(f"[DEBUG:{FILE_NAME}]已创建表{self.TABLE_NAME}")
-        except OperationalError:
-            print(f"[DEBUG:{FILE_NAME}]表{self.TABLE_NAME}已存在")
+            
         except Exception as e:
             print(f"[DEBUG:{FILE_NAME}]表{self.TABLE_NAME}无法创建，报错：{e}")
 
@@ -57,7 +66,7 @@ class Data:
                     cursor.execute(f"ALTER TABLE {self.TABLE_NAME} ADD COLUMN {col}")    #添加缺失字段
                     print(f"[DEBUG:{FILE_NAME}]表{self.TABLE_NAME}已添加字段'{col}'")
             except Exception as e:
-                print(f"[ERROR{FILE_NAME}]表{self.TABLE_NAME}添加失败，报错：{e}'")
+                print(f"[ERROR{FILE_NAME}]表{self.TABLE_NAME}添加字段{col}失败，报错：{e}'")
         else:
             print(f"[DEBUG:{FILE_NAME}]表{self.TABLE_NAME}字段完整，无需更新")
 
@@ -84,12 +93,13 @@ class Data:
         all_data = cursor.fetchall()
         cursor.close()
         conn.close()
+
         for data in all_data:
             data_dic = dict(zip(self.columns(), data))  #变为字典（包含id）
             data_id = data_dic.pop("id")                #取出id单独返回
             yield data_id, data_dic
 
-    def add(self, data_dic, data_id = None):
+    def add(self, data_dic, data_id = None) -> int | dict:
         '''添加新数据'''
         conn = connect(DB_NAME)
         cursor = conn.cursor()
@@ -143,7 +153,7 @@ class Data:
 
         except Exception as e:
             conn.rollback()
-            print(f"[ERROR{FILE_NAME}]表{self.TABLE_NAME}修改（id = {data_id}）失败，报错：{e}")
+            print(f"[ERROR:{FILE_NAME}]表{self.TABLE_NAME}修改（id = {data_id}）失败，报错：{e}")
 
         finally:
             cursor.close()
@@ -163,7 +173,7 @@ class Data:
 
         except Exception as e:
             conn.rollback()
-            print(f"[ERROR{FILE_NAME}]表{self.TABLE_NAME}删除（id = {data_id}）数据失败，报错：{e}")
+            print(f"[ERROR:{FILE_NAME}]表{self.TABLE_NAME}删除（id = {data_id}）数据失败，报错：{e}")
 
         finally:
             cursor.close()
@@ -198,9 +208,15 @@ class Data:
 
         try:
             cursor.execute(f"DROP TABLE IF EXISTS {self.TABLE_NAME}")
+            conn.commit()
             self._create(conn, cursor)
+            self._update(conn, cursor)
             print(f"[DEBUG:{FILE_NAME}]表{self.TABLE_NAME}已重置。")
-        
+
+        except Exception as e:
+            print(f"[ERROR:{FILE_NAME}]重置表{self.TABLE_NAME}失败：{e}")
+            conn.rollback()
+
         finally:
             cursor.close()
             conn.close()
@@ -302,14 +318,16 @@ class ShortcutCmdData(Data):
     TABLE_COLUMNS = [
         "id INTEGER PRIMARY KEY",           
         "cmd_name TEXT NOT NULL UNIQUE",    #快捷指令名称
+        "cmd_description TEXT",              #快捷指令描述
         "cmd_content TEXT NOT NULL",        #快捷指令内容
-        "cmd_type TEXT CHECK (cmd_type IN ('simple', 'complex'))"   #快捷指令解析方式（简单、复杂）
+        "cmd_type TEXT CHECK (cmd_type IN ('simple', 'complex'))",   #快捷指令解析方式（简单、复杂）
+        "enable_delete INTEGER CHECK (enable_delete IN (0, 1))"    #是否可删除
     ]
+
 
 user_data = UserData()
 advanced_data = AdvancedData()
 shortcut_cmd_data = ShortcutCmdData()
-
 
 if __name__ == "__main__":
     '''用于测试'''
