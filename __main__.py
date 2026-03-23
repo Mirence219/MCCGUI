@@ -97,14 +97,13 @@ from multiprocessing import freeze_support
 from tkinter import *
 import os
 
-from mccgui import run
+from src.views.main_window import run
 from __version__ import __version__, MangoCraft
 
 #代码文件名
 FILE_NAME = os.path.basename(__file__) 
 
 if __name__=="__main__":
-    print(f"[DEBUG:{FILE_NAME}]主进程MCCGUI_v{__version__} {"for MangoCraft" if MangoCraft else ""}（{os.getpid()}）已启动。")
+    print(f"[DEBUG:{FILE_NAME}]主进程MCCGUI_v{__version__}（{os.getpid()}）已启动。")
     freeze_support()
-    app = run()
-    mainloop()
+    run()

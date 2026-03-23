@@ -16,6 +16,7 @@ build/
 *.pyproj
 *.sln
 *.db
+ui2py.py
 
 # User-specific files
 *.rsuser

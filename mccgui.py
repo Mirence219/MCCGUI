@@ -16,6 +16,9 @@ from turtle import distance, width
 from typing import List
 import ping3
 
+from PySide6.QtWidgets import *
+from PySide6.QtUiTools import QUiLoader
+from PySide6.QtCore import QFile
 
 from databace import user_data, advanced_data
 import set_toml
@@ -1262,6 +1265,9 @@ class OAuth20Window:
 
 
 def run():
-    return MCC_GUI()
+    app = QApplication([])
+    window = MainWindow()
+    window.show()
+    app.exec()
 
 
