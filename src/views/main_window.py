@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import *
 from PySide6.QtUiTools import QUiLoader
-from PySide6.QtCore import QFile
+from PySide6.QtGui import QIcon
 import sys
 
 from __version__ import __version__
@@ -13,6 +13,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.setWindowTitle(f"MCCGUI v{__version__}")
+        self.setWindowIcon(QIcon("assets/AppIcon.ico"))
+
         self.pushButton_add_server.clicked.connect(self.on_pushButton_add_server_clicked)
 
     def on_pushButton_add_server_clicked(self):

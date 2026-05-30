@@ -48,14 +48,19 @@ class Ui_Dialog(object):
 
         self.verticalLayout.addLayout(self.horizontalLayout_2)
 
-        self.listWidget = QListWidget(self.tab_logged_servers)
+        self.listWidget_servers = QListWidget(self.tab_logged_servers)
         icon = QIcon()
         icon.addFile(u"C:/Users/12110/Pictures/0b9a9e29a1faf3aa91fef2ac0c78ae220d29c7e9.jpg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        __qlistwidgetitem = QListWidgetItem(self.listWidget)
+        __qlistwidgetitem = QListWidgetItem(self.listWidget_servers)
         __qlistwidgetitem.setIcon(icon);
-        self.listWidget.setObjectName(u"listWidget")
+        QListWidgetItem(self.listWidget_servers)
+        QListWidgetItem(self.listWidget_servers)
+        QListWidgetItem(self.listWidget_servers)
+        QListWidgetItem(self.listWidget_servers)
+        QListWidgetItem(self.listWidget_servers)
+        self.listWidget_servers.setObjectName(u"listWidget_servers")
 
-        self.verticalLayout.addWidget(self.listWidget)
+        self.verticalLayout.addWidget(self.listWidget_servers)
 
         self.tabWidget_main.addTab(self.tab_logged_servers, "")
         self.tab_custom_server = QWidget()
@@ -163,7 +168,7 @@ class Ui_Dialog(object):
 
         self.retranslateUi(Dialog)
 
-        self.tabWidget_main.setCurrentIndex(1)
+        self.tabWidget_main.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(Dialog)
@@ -174,12 +179,22 @@ class Ui_Dialog(object):
         self.lineEdit_search_servers.setPlaceholderText(QCoreApplication.translate("Dialog", u"\u8f93\u5165\u670d\u52a1\u5668\u540d\u6216IP\u5730\u5740\u4ee5\u641c\u7d22", None))
         self.pushButton_search_servers.setText(QCoreApplication.translate("Dialog", u"\u641c\u7d22", None))
 
-        __sortingEnabled = self.listWidget.isSortingEnabled()
-        self.listWidget.setSortingEnabled(False)
-        ___qlistwidgetitem = self.listWidget.item(0)
+        __sortingEnabled = self.listWidget_servers.isSortingEnabled()
+        self.listWidget_servers.setSortingEnabled(False)
+        ___qlistwidgetitem = self.listWidget_servers.item(0)
         ___qlistwidgetitem.setText(QCoreApplication.translate("Dialog", u"\u8292\u679c\u65b9\u5757\u7c89\u4e1d\u670d\n"
 "je.server.mangocraft.net", None));
-        self.listWidget.setSortingEnabled(__sortingEnabled)
+        ___qlistwidgetitem1 = self.listWidget_servers.item(1)
+        ___qlistwidgetitem1.setText(QCoreApplication.translate("Dialog", u"\u6d4b\u8bd5\u670d\u52a1\u56681", None));
+        ___qlistwidgetitem2 = self.listWidget_servers.item(2)
+        ___qlistwidgetitem2.setText(QCoreApplication.translate("Dialog", u"\u6d4b\u8bd5\u670d\u52a1\u56682", None));
+        ___qlistwidgetitem3 = self.listWidget_servers.item(3)
+        ___qlistwidgetitem3.setText(QCoreApplication.translate("Dialog", u"\u6d4b\u8bd5\u670d\u52a1\u5668c", None));
+        ___qlistwidgetitem4 = self.listWidget_servers.item(4)
+        ___qlistwidgetitem4.setText(QCoreApplication.translate("Dialog", u"\u6d4b\u8bd5\u670d\u52a1\u5668D", None));
+        ___qlistwidgetitem5 = self.listWidget_servers.item(5)
+        ___qlistwidgetitem5.setText(QCoreApplication.translate("Dialog", u"ceshigiaogiaogiao!", None));
+        self.listWidget_servers.setSortingEnabled(__sortingEnabled)
 
         self.tabWidget_main.setTabText(self.tabWidget_main.indexOf(self.tab_logged_servers), QCoreApplication.translate("Dialog", u"\u5df2\u6536\u5f55\u670d\u52a1\u5668", None))
         self.label_server_name.setText(QCoreApplication.translate("Dialog", u"       \u670d\u52a1\u5668\u540d\u79f0\uff1a", None))

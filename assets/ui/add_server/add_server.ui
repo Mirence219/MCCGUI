@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget_main">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab_logged_servers">
       <attribute name="title">
@@ -43,7 +43,7 @@
         </layout>
        </item>
        <item>
-        <widget class="QListWidget" name="listWidget">
+        <widget class="QListWidget" name="listWidget_servers">
          <item>
           <property name="text">
            <string>芒果方块粉丝服
@@ -52,6 +52,31 @@ je.server.mangocraft.net</string>
           <property name="icon">
            <iconset>
             <normaloff>C:/Users/12110/Pictures/0b9a9e29a1faf3aa91fef2ac0c78ae220d29c7e9.jpg</normaloff>C:/Users/12110/Pictures/0b9a9e29a1faf3aa91fef2ac0c78ae220d29c7e9.jpg</iconset>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>测试服务器1</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>测试服务器2</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>测试服务器c</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>测试服务器D</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>ceshigiaogiaogiao!</string>
           </property>
          </item>
         </widget>
