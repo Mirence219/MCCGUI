@@ -2,10 +2,10 @@ from PySide6.QtWidgets import *
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtCore import QSortFilterProxyModel, Qt
 
-from src.ui.add_server.ui_add_server import Ui_Dialog
+from src.ui.add_server.ui_add_server import Ui_Dialog_add_server
 from src.ui.add_server.ui_standby_server import Ui_Form_standby_server
 
-class AddServerDialog(QDialog, Ui_Dialog):
+class AddServerDialog(QDialog, Ui_Dialog_add_server):
     '''添加服务器窗口类'''
     def __init__(self, master):
         super().__init__()
@@ -26,7 +26,7 @@ class AddServerDialog(QDialog, Ui_Dialog):
         self.standby_ip_widgets_dic = {}    #备用ip输入行列表
 
         self.pushButton_add_standby_ip.clicked.connect(self.on_pushButton_add_standby_ip_clicked)     
-        self.pushButton_add_server.clicked.connect(self.on_pushButton_add_server_clicked)
+        #self.pushButton_add_server.clicked.connect(self.on_pushButton_add_server_clicked)
 
 
     def on_pushButton_add_standby_ip_clicked(self):

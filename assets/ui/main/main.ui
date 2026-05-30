@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>544</width>
-    <height>398</height>
+    <width>662</width>
+    <height>481</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -56,51 +56,11 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>450</width>
-                   <height>304</height>
+                   <width>568</width>
+                   <height>387</height>
                   </rect>
                  </property>
                  <layout class="QGridLayout" name="gridLayout_3">
-                  <item row="0" column="0">
-                   <widget class="QFrame" name="frame_add_instance">
-                    <property name="minimumSize">
-                     <size>
-                      <width>150</width>
-                      <height>150</height>
-                     </size>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>150</width>
-                      <height>150</height>
-                     </size>
-                    </property>
-                    <property name="locale">
-                     <locale language="Chinese" country="China"/>
-                    </property>
-                    <property name="frameShape">
-                     <enum>QFrame::Shape::StyledPanel</enum>
-                    </property>
-                    <property name="frameShadow">
-                     <enum>QFrame::Shadow::Raised</enum>
-                    </property>
-                    <layout class="QVBoxLayout" name="verticalLayout_3">
-                     <item>
-                      <widget class="QLabel" name="label">
-                       <property name="text">
-                        <string>新建实例</string>
-                       </property>
-                       <property name="textFormat">
-                        <enum>Qt::TextFormat::AutoText</enum>
-                       </property>
-                       <property name="alignment">
-                        <set>Qt::AlignmentFlag::AlignCenter</set>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </widget>
-                  </item>
                   <item row="0" column="1">
                    <spacer name="horizontalSpacer">
                     <property name="orientation">
@@ -126,6 +86,19 @@
                      </size>
                     </property>
                    </spacer>
+                  </item>
+                  <item row="0" column="0">
+                   <widget class="QPushButton" name="pushButton_add_instance">
+                    <property name="minimumSize">
+                     <size>
+                      <width>150</width>
+                      <height>150</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>新建实例</string>
+                    </property>
+                   </widget>
                   </item>
                  </layout>
                 </widget>

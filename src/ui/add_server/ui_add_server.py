@@ -20,14 +20,14 @@ from PySide6.QtWidgets import (QApplication, QDialog, QHBoxLayout, QLabel,
     QSizePolicy, QSpacerItem, QTabWidget, QVBoxLayout,
     QWidget)
 
-class Ui_Dialog(object):
-    def setupUi(self, Dialog):
-        if not Dialog.objectName():
-            Dialog.setObjectName(u"Dialog")
-        Dialog.resize(640, 480)
-        self.horizontalLayout = QHBoxLayout(Dialog)
+class Ui_Dialog_add_server(object):
+    def setupUi(self, Dialog_add_server):
+        if not Dialog_add_server.objectName():
+            Dialog_add_server.setObjectName(u"Dialog_add_server")
+        Dialog_add_server.resize(640, 480)
+        self.horizontalLayout = QHBoxLayout(Dialog_add_server)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.tabWidget_main = QTabWidget(Dialog)
+        self.tabWidget_main = QTabWidget(Dialog_add_server)
         self.tabWidget_main.setObjectName(u"tabWidget_main")
         self.tab_logged_servers = QWidget()
         self.tab_logged_servers.setObjectName(u"tab_logged_servers")
@@ -166,43 +166,43 @@ class Ui_Dialog(object):
         self.horizontalLayout.addWidget(self.tabWidget_main)
 
 
-        self.retranslateUi(Dialog)
+        self.retranslateUi(Dialog_add_server)
 
         self.tabWidget_main.setCurrentIndex(0)
 
 
-        QMetaObject.connectSlotsByName(Dialog)
+        QMetaObject.connectSlotsByName(Dialog_add_server)
     # setupUi
 
-    def retranslateUi(self, Dialog):
-        Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Dialog", None))
-        self.lineEdit_search_servers.setPlaceholderText(QCoreApplication.translate("Dialog", u"\u8f93\u5165\u670d\u52a1\u5668\u540d\u6216IP\u5730\u5740\u4ee5\u641c\u7d22", None))
-        self.pushButton_search_servers.setText(QCoreApplication.translate("Dialog", u"\u641c\u7d22", None))
+    def retranslateUi(self, Dialog_add_server):
+        Dialog_add_server.setWindowTitle(QCoreApplication.translate("Dialog_add_server", u"Dialog", None))
+        self.lineEdit_search_servers.setPlaceholderText(QCoreApplication.translate("Dialog_add_server", u"\u8f93\u5165\u670d\u52a1\u5668\u540d\u6216IP\u5730\u5740\u4ee5\u641c\u7d22", None))
+        self.pushButton_search_servers.setText(QCoreApplication.translate("Dialog_add_server", u"\u641c\u7d22", None))
 
         __sortingEnabled = self.listWidget_servers.isSortingEnabled()
         self.listWidget_servers.setSortingEnabled(False)
         ___qlistwidgetitem = self.listWidget_servers.item(0)
-        ___qlistwidgetitem.setText(QCoreApplication.translate("Dialog", u"\u8292\u679c\u65b9\u5757\u7c89\u4e1d\u670d\n"
+        ___qlistwidgetitem.setText(QCoreApplication.translate("Dialog_add_server", u"\u8292\u679c\u65b9\u5757\u7c89\u4e1d\u670d\n"
 "je.server.mangocraft.net", None));
         ___qlistwidgetitem1 = self.listWidget_servers.item(1)
-        ___qlistwidgetitem1.setText(QCoreApplication.translate("Dialog", u"\u6d4b\u8bd5\u670d\u52a1\u56681", None));
+        ___qlistwidgetitem1.setText(QCoreApplication.translate("Dialog_add_server", u"\u6d4b\u8bd5\u670d\u52a1\u56681", None));
         ___qlistwidgetitem2 = self.listWidget_servers.item(2)
-        ___qlistwidgetitem2.setText(QCoreApplication.translate("Dialog", u"\u6d4b\u8bd5\u670d\u52a1\u56682", None));
+        ___qlistwidgetitem2.setText(QCoreApplication.translate("Dialog_add_server", u"\u6d4b\u8bd5\u670d\u52a1\u56682", None));
         ___qlistwidgetitem3 = self.listWidget_servers.item(3)
-        ___qlistwidgetitem3.setText(QCoreApplication.translate("Dialog", u"\u6d4b\u8bd5\u670d\u52a1\u5668c", None));
+        ___qlistwidgetitem3.setText(QCoreApplication.translate("Dialog_add_server", u"\u6d4b\u8bd5\u670d\u52a1\u5668c", None));
         ___qlistwidgetitem4 = self.listWidget_servers.item(4)
-        ___qlistwidgetitem4.setText(QCoreApplication.translate("Dialog", u"\u6d4b\u8bd5\u670d\u52a1\u5668D", None));
+        ___qlistwidgetitem4.setText(QCoreApplication.translate("Dialog_add_server", u"\u6d4b\u8bd5\u670d\u52a1\u5668D", None));
         ___qlistwidgetitem5 = self.listWidget_servers.item(5)
-        ___qlistwidgetitem5.setText(QCoreApplication.translate("Dialog", u"ceshigiaogiaogiao!", None));
+        ___qlistwidgetitem5.setText(QCoreApplication.translate("Dialog_add_server", u"ceshigiaogiaogiao!", None));
         self.listWidget_servers.setSortingEnabled(__sortingEnabled)
 
-        self.tabWidget_main.setTabText(self.tabWidget_main.indexOf(self.tab_logged_servers), QCoreApplication.translate("Dialog", u"\u5df2\u6536\u5f55\u670d\u52a1\u5668", None))
-        self.label_server_name.setText(QCoreApplication.translate("Dialog", u"       \u670d\u52a1\u5668\u540d\u79f0\uff1a", None))
-        self.label_server_ip.setText(QCoreApplication.translate("Dialog", u"    IP\u5730\u5740\uff1a", None))
-        self.label_3.setText(QCoreApplication.translate("Dialog", u"\u7aef\u53e3\uff1a", None))
+        self.tabWidget_main.setTabText(self.tabWidget_main.indexOf(self.tab_logged_servers), QCoreApplication.translate("Dialog_add_server", u"\u5df2\u6536\u5f55\u670d\u52a1\u5668", None))
+        self.label_server_name.setText(QCoreApplication.translate("Dialog_add_server", u"       \u670d\u52a1\u5668\u540d\u79f0\uff1a", None))
+        self.label_server_ip.setText(QCoreApplication.translate("Dialog_add_server", u"    IP\u5730\u5740\uff1a", None))
+        self.label_3.setText(QCoreApplication.translate("Dialog_add_server", u"\u7aef\u53e3\uff1a", None))
         self.lineEdit_server_port.setInputMask("")
-        self.pushButton_add_standby_ip.setText(QCoreApplication.translate("Dialog", u"\u6dfb\u52a0\u5907\u7528\u5730\u5740", None))
-        self.pushButton_add_server.setText(QCoreApplication.translate("Dialog", u"\u6dfb\u52a0\u670d\u52a1\u5668", None))
-        self.tabWidget_main.setTabText(self.tabWidget_main.indexOf(self.tab_custom_server), QCoreApplication.translate("Dialog", u"\u81ea\u5b9a\u4e49\u670d\u52a1\u5668", None))
+        self.pushButton_add_standby_ip.setText(QCoreApplication.translate("Dialog_add_server", u"\u6dfb\u52a0\u5907\u7528\u5730\u5740", None))
+        self.pushButton_add_server.setText(QCoreApplication.translate("Dialog_add_server", u"\u6dfb\u52a0\u670d\u52a1\u5668", None))
+        self.tabWidget_main.setTabText(self.tabWidget_main.indexOf(self.tab_custom_server), QCoreApplication.translate("Dialog_add_server", u"\u81ea\u5b9a\u4e49\u670d\u52a1\u5668", None))
     # retranslateUi
 

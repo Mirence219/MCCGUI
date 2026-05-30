@@ -15,15 +15,15 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QFrame, QGridLayout, QLabel,
-    QMainWindow, QPushButton, QScrollArea, QSizePolicy,
-    QSpacerItem, QTabWidget, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QGridLayout, QMainWindow, QPushButton,
+    QScrollArea, QSizePolicy, QSpacerItem, QTabWidget,
+    QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(544, 398)
+        MainWindow.resize(662, 481)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout = QVBoxLayout(self.centralwidget)
@@ -50,28 +50,9 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 450, 304))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 568, 387))
         self.gridLayout_3 = QGridLayout(self.scrollAreaWidgetContents)
         self.gridLayout_3.setObjectName(u"gridLayout_3")
-        self.frame_add_instance = QFrame(self.scrollAreaWidgetContents)
-        self.frame_add_instance.setObjectName(u"frame_add_instance")
-        self.frame_add_instance.setMinimumSize(QSize(150, 150))
-        self.frame_add_instance.setMaximumSize(QSize(150, 150))
-        self.frame_add_instance.setLocale(QLocale(QLocale.Chinese, QLocale.China))
-        self.frame_add_instance.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_add_instance.setFrameShadow(QFrame.Shadow.Raised)
-        self.verticalLayout_3 = QVBoxLayout(self.frame_add_instance)
-        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.label = QLabel(self.frame_add_instance)
-        self.label.setObjectName(u"label")
-        self.label.setTextFormat(Qt.TextFormat.AutoText)
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.verticalLayout_3.addWidget(self.label)
-
-
-        self.gridLayout_3.addWidget(self.frame_add_instance, 0, 0, 1, 1)
-
         self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.gridLayout_3.addItem(self.horizontalSpacer, 0, 1, 1, 1)
@@ -79,6 +60,12 @@ class Ui_MainWindow(object):
         self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.gridLayout_3.addItem(self.verticalSpacer, 1, 0, 1, 1)
+
+        self.pushButton_add_instance = QPushButton(self.scrollAreaWidgetContents)
+        self.pushButton_add_instance.setObjectName(u"pushButton_add_instance")
+        self.pushButton_add_instance.setMinimumSize(QSize(150, 150))
+
+        self.gridLayout_3.addWidget(self.pushButton_add_instance, 0, 0, 1, 1)
 
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
@@ -134,7 +121,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
-        self.label.setText(QCoreApplication.translate("MainWindow", u"\u65b0\u5efa\u5b9e\u4f8b", None))
+        self.pushButton_add_instance.setText(QCoreApplication.translate("MainWindow", u"\u65b0\u5efa\u5b9e\u4f8b", None))
         self.tabWidget_home.setTabText(self.tabWidget_home.indexOf(self.tab_mangocraft), QCoreApplication.translate("MainWindow", u"\u8292\u679c\u65b9\u5757", None))
         self.pushButton_add_server.setText(QCoreApplication.translate("MainWindow", u"\u6dfb\u52a0\u670d\u52a1\u5668", None))
         self.tabWidget_home.setTabText(self.tabWidget_home.indexOf(self.tab_add_server), QCoreApplication.translate("MainWindow", u"+", None))

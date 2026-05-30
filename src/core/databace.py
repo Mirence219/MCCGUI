@@ -324,6 +324,9 @@ class ShortcutCmdData(Data):
         "enable_delete INTEGER CHECK (enable_delete IN (0, 1))"    #是否可删除
     ]
 
+class ServerData(Data):
+    '''服务器表类'''
+    pass
 
 user_data = UserData()
 advanced_data = AdvancedData()
